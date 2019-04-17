@@ -20,6 +20,7 @@
 
 namespace coil
 {
+#define EPOCHFILETIME (116444736000000000i64)
   // no implementation
 
   int sleep(TimeValue interval)
@@ -224,5 +225,19 @@ namespace coil
     {
       return ret;
     }
+  }
+
+  unsigned int sleep(unsigned int seconds)
+  {
+
+      ::Sleep(seconds * 1000);
+      return 0;
+  }
+
+  TimeValue gettimeofday()
+  {
+      timeval tv;
+      coil::gettimeofday(&tv, 0);
+      return TimeValue(tv.tv_sec, tv.tv_usec);
   }
 };
