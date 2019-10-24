@@ -303,7 +303,7 @@ namespace RTC
 
       
 
-      ROSMessageInfoBase* info = ROSMessageInfoFactory::instance().createObject(m_messageType);
+      ROSMessageInfoBase* info = GlobalROSMessageInfoList::instance().getInfo(m_messageType);
       
       if(!info)
       {

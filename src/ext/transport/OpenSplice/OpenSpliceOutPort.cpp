@@ -97,7 +97,7 @@ namespace RTC
     }
 
 
-    OpenSpliceMessageInfoBase* info = OpenSpliceMessageInfoFactory::instance().createObject(dataname);
+    OpenSpliceMessageInfoBase* info = GlobalOpenSpliceMessageInfoList::instance().getInfo(dataname);
 
     if (!info)
     {

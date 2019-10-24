@@ -173,7 +173,7 @@ namespace RTC
 
     XmlRpc::XmlRpcClient *master = ros::XMLRPCManager::instance()->getXMLRPCClient(m_roscorehost, m_roscoreport, "/");
 
-    ROSMessageInfoBase* info = ROSMessageInfoFactory::instance().createObject(m_messageType);
+    ROSMessageInfoBase* info = GlobalROSMessageInfoList::instance().getInfo(m_messageType);
 
     if(!info)
     {
@@ -343,7 +343,7 @@ namespace RTC
 
       m_tcp_connecters[xmlrpc_uri] = PublisherLink(connection, m_pubnum);
       m_pubnum++;
-      ROSMessageInfoBase* info = ROSMessageInfoFactory::instance().createObject(m_messageType);
+      ROSMessageInfoBase* info = GlobalROSMessageInfoList::instance().getInfo(m_messageType);
 
       if(!info)
       {

@@ -122,7 +122,7 @@ namespace RTC
 
     if (!is_serializer_cdr)
     {
-        FastRTPSMessageInfoBase* info = FastRTPSMessageInfoFactory::instance().createObject(marshaling_type);
+        FastRTPSMessageInfoBase* info = GlobalFastRTPSMessageInfoList::instance().getInfo(marshaling_type);
 
         if (!info)
         {

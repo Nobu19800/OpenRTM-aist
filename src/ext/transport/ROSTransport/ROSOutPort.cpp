@@ -119,7 +119,7 @@ namespace RTC
     
     XmlRpc::XmlRpcClient *master = ros::XMLRPCManager::instance()->getXMLRPCClient(m_roscorehost, m_roscoreport, "/");
 
-    ROSMessageInfoBase* info = ROSMessageInfoFactory::instance().createObject(m_messageType);
+    ROSMessageInfoBase* info = GlobalROSMessageInfoList::instance().getInfo(m_messageType);
 
     if(!info)
     {
