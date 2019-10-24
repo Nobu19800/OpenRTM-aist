@@ -151,7 +151,7 @@ namespace RTC
         std::string package_name = str_list[0];
         std::string type_name = str_list[1];
         std::string data_name = str_list[2];
-        std::string ret = str_list[0]+"::"+type_name+"::dds_"+"::"+data_name+"_";
+        std::string ret = package_name+"::"+type_name+"::dds_"+"::"+data_name+"_";
 
         return ret;
     };
