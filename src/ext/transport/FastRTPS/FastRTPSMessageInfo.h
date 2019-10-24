@@ -21,7 +21,7 @@
 
 
 #include <coil/Properties.h>
-#include <coil/Factory.h>
+#include <coil/Singleton.h>
 
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
