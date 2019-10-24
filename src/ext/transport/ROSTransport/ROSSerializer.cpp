@@ -903,6 +903,14 @@ namespace RTC
       
       data.tm.sec = m_msg.header.stamp.sec;
       data.tm.nsec = m_msg.header.stamp.nsec;
+
+      const long max_size = std::pow(16, sizeof(CORBA::UShort));
+
+      if (m_msg.height > max_size || m_msg.width > max_size)
+      {
+          return false;
+      }
+
       data.height = static_cast<CORBA::UShort>(m_msg.height);
       data.width = static_cast<CORBA::UShort>(m_msg.width);
       data.format = CORBA::string_dup(m_msg.encoding.c_str());
