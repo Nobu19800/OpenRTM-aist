@@ -137,8 +137,6 @@ namespace RTC
     topic = info->topic_name(topic);
     std::string idlPath = info->idl_path();
 
-    OpenSpliceMessageInfoFactory::instance().deleteObject(info);
-
     std::string endian_type{coil::normalize(
       prop.getProperty("serializer.cdr.endian", ""))};
     std::vector<std::string> endian_str(coil::split(endian_type, ","));

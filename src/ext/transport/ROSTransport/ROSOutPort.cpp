@@ -134,8 +134,6 @@ namespace RTC
     request[2] = m_datatype;
     request[3] = std::string(ros::XMLRPCManager::instance()->getServerURI());
 
-    ROSMessageInfoFactory::instance().deleteObject(info);
-
     bool b = master->execute("registerPublisher", request, response);
 
     if(!b)

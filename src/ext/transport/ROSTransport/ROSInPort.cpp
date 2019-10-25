@@ -187,8 +187,6 @@ namespace RTC
     request[2] = m_datatype;
     request[3] = std::string(ros::XMLRPCManager::instance()->getServerURI());
 
-    ROSMessageInfoFactory::instance().deleteObject(info);
-
 
     bool b = master->execute("registerSubscriber", request, response);
 
@@ -365,8 +363,6 @@ namespace RTC
       RTC_VERBOSE(("Caller ID:%s", m_callerid.c_str()));
       RTC_VERBOSE(("Topic Name:%s", topic.c_str()));
       RTC_VERBOSE(("TCPTransPort created"));
-
-      ROSMessageInfoFactory::instance().deleteObject(info);
 
 
 

@@ -329,8 +329,6 @@ namespace RTC
       RTC_VERBOSE(("TCPTransPort created"));
 
 
-      ROSMessageInfoFactory::instance().deleteObject(info);
-
       conn->writeHeader(m, boost::bind(&ROSOutPort::onHeaderWritten, this, _1));
       return true;
     }

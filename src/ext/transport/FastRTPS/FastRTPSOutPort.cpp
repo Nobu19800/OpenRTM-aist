@@ -108,8 +108,6 @@ namespace RTC
         m_dataType = info->data_type();
         m_topic = info->topic_name(m_topic);
 
-        FastRTPSMessageInfoFactory::instance().deleteObject(info);
-
     }
     else
     {
