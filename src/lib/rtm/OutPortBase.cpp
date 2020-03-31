@@ -98,7 +98,7 @@ namespace RTC
     // In the FSM4RTC specification, publisher type is defined as "io_mode"
     addProperty("dataport.io_mode", pubs.c_str());
 
-    m_properties["data_type"] = data_type;
+    m_properties["dataport.data_type"] = data_type;
 
     initConnectorListeners();
 

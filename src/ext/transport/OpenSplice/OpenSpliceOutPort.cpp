@@ -92,7 +92,7 @@ namespace RTC
     }
     else
     {
-        dataname = prop.getProperty("data_type", "RTC::CDR_Data");
+        dataname = prop.getProperty("dataport.data_type", "RTC::CDR_Data");
         corbamode = true;
     }
 
