@@ -367,7 +367,6 @@ namespace coil
 	coil::eraseHeadBlank(key);
 	coil::eraseTailBlank(key);
 	
-	value = coil::unescape(value);
 	coil::eraseHeadBlank(value);
 	coil::eraseTailBlank(value);
 	
