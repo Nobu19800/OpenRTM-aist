@@ -23,6 +23,7 @@
 #include <rtm/NamingManager.h>
 #include <rtm/Manager.h>
 #include <rtm/CORBA_IORUtil.h>
+#include <rtm/CORBA_RTCUtil.h>
 
 #include <algorithm>
 #include <functional>
@@ -42,25 +43,28 @@ namespace RTC
       m_replaceEndpoint(false)
   {
     rtclog.setName("NamingOnCorba");
-    coil::Properties& prop(Manager::instance().getConfig());
-    m_replaceEndpoint =
-      coil::toBool(prop["corba.nameservice.replace_endpoint"],
-                   "YES", "NO", true);
+    if(CORBA_RTCUtil::CorbaURI(names).isAddressOnly())
+    {
+      coil::Properties& prop(Manager::instance().getConfig());
+      m_replaceEndpoint =
+        coil::toBool(prop["corba.nameservice.replace_endpoint"],
+                    "YES", "NO", true);
 
 
-    coil::vstring host_port(coil::split(names, ":"));
-    if (coil::dest_to_endpoint(host_port[0], m_endpoint))
-      {
+      coil::vstring host_port(coil::split(names, ":"));
+      if (coil::dest_to_endpoint(host_port[0], m_endpoint))
+        {
 
-        RTC_INFO(("Endpoint for the CORBA naming service (%s) is %s.",
-                  host_port[0].c_str(),
-                  m_endpoint.c_str()));
-      }
-    else
-      {
-        RTC_WARN(("No endpoint for the CORBA naming service (%s) was found.",
-                  host_port[0].c_str()));
-      }
+          RTC_INFO(("Endpoint for the CORBA naming service (%s) is %s.",
+                    host_port[0].c_str(),
+                    m_endpoint.c_str()));
+        }
+      else
+        {
+          RTC_WARN(("No endpoint for the CORBA naming service (%s) was found.",
+                    host_port[0].c_str()));
+        }
+    }
   }
   /*!
    * @if jp
@@ -336,7 +340,7 @@ namespace RTC
   * @endif
   */
   NamingOnManager::NamingOnManager(CORBA::ORB_ptr orb, Manager* mgr)
-	  : m_orb(orb), m_mgr(mgr)
+      : m_orb(orb), m_mgr(mgr)
   {
   }
   /*!
@@ -347,24 +351,24 @@ namespace RTC
   * @endif
   */
   void NamingOnManager::bindObject(const char* name,
-	  const RTObject_impl*  /*rtobj*/)
+      const RTObject_impl*  /*rtobj*/)
   {
-	  RTC_TRACE(("bindObject(name = %s, rtobj)", name));
-	  return;
+    RTC_TRACE(("bindObject(name = %s, rtobj)", name));
+    return;
   }
 
   void NamingOnManager::bindObject(const char* name,
-	  const PortBase*  /*port*/)
+      const PortBase*  /*port*/)
   {
-	  RTC_TRACE(("bindObject(name = %s, port)", name));
-	  return;
+    RTC_TRACE(("bindObject(name = %s, port)", name));
+    return;
   }
 
   void NamingOnManager::bindObject(const char* name,
-	  const RTM::ManagerServant*  /*mgr*/)
+      const RTM::ManagerServant*  /*mgr*/)
   {
-	  RTC_TRACE(("bindObject(name = %s, mgr)", name));
-	  return;
+    RTC_TRACE(("bindObject(name = %s, mgr)", name));
+    return;
   }
 
   /*!
@@ -376,14 +380,14 @@ namespace RTC
   */
   void NamingOnManager::unbindObject(const char* name)
   {
-	  RTC_TRACE(("unbindObject(name  = %s)", name));
-	  return;
+    RTC_TRACE(("unbindObject(name  = %s)", name));
+    return;
   }
 
   bool NamingOnManager::isAlive()
   {
-	  RTC_TRACE(("isAlive()"));
-	  return true;
+    RTC_TRACE(("isAlive()"));
+    return true;
   }
 
   /*!
@@ -406,46 +410,46 @@ namespace RTC
    */
   RTC::RTCList NamingOnManager::string_to_component(std::string name)
   {
-	  RTC::RTCList rtc_list;
-	  coil::vstring tmp = coil::split(name, "://");
-	  if (tmp.size() > 1)
-	  {
-		  if (tmp[0] == "rtcloc")
-		  {
-			  std::string url = tmp[1];
-			  coil::vstring r = coil::split(url, "/");
+    RTC::RTCList rtc_list;
+    coil::vstring tmp = coil::split(name, "://");
+    if (tmp.size() > 1)
+    {
+      if (tmp[0] == "rtcloc")
+      {
+        std::string url = tmp[1];
+        coil::vstring r = coil::split(url, "/");
 
-			  if (r.size() > 1)
-			  {
-				  std::string host = r[0];
-				  std::string rtc_name = url.substr(host.size()+1, url.size() - host.size());
+        if (r.size() > 1)
+        {
+          std::string host = r[0];
+          std::string rtc_name = url.substr(host.size()+1, url.size() - host.size());
 
-				  RTM::Manager_var mgr = getManager(host);
-				  
-				  if (!CORBA::is_nil(mgr))
-				  {
-					 
-					  rtc_list = (*mgr->get_components_by_name(rtc_name.c_str()));
-					  RTM::ManagerList* slaves = mgr->get_slave_managers();
-					  for (unsigned int i = 0; i < slaves->length(); i++)
-					  {
-						  
-						  try
-						  {
-							  RTC::RTCList slave_rtcs = (*(*slaves)[i]->get_components_by_name(rtc_name.c_str()));
-							  CORBA_SeqUtil::push_back_list(rtc_list, slave_rtcs);
-						  }
-						  catch (...)
-						  {
-							  mgr->remove_slave_manager((*slaves)[i]);
-						  }
-					  }
-				  }
-				  return rtc_list;
-			  }
-		  }
-	  }
-	  return rtc_list;
+          RTM::Manager_var mgr = getManager(host);
+          
+          if (!CORBA::is_nil(mgr))
+          {
+           
+            rtc_list = (*mgr->get_components_by_name(rtc_name.c_str()));
+            RTM::ManagerList* slaves = mgr->get_slave_managers();
+            for (unsigned int i = 0; i < slaves->length(); i++)
+            {
+              
+              try
+              {
+                RTC::RTCList slave_rtcs = (*(*slaves)[i]->get_components_by_name(rtc_name.c_str()));
+                CORBA_SeqUtil::push_back_list(rtc_list, slave_rtcs);
+              }
+              catch (...)
+              {
+                mgr->remove_slave_manager((*slaves)[i]);
+              }
+            }
+          }
+          return rtc_list;
+        }
+      }
+    }
+    return rtc_list;
   }
 
 
@@ -496,11 +500,10 @@ namespace RTC
 
     try
       {
-        std::string mgrloc = "corbaloc:iiop:";
         coil::Properties prop = m_mgr->getConfig();
         std::string manager_name = prop.getProperty("manager.name");
-        mgrloc += name;
-        mgrloc += "/" + manager_name;
+        
+        std::string mgrloc(CORBA_RTCUtil::CorbaURI(name, manager_name).toString());
 
         CORBA::Object_var  mobj = m_orb->string_to_object(mgrloc.c_str());
         RTM::Manager_var mgr = RTM::Manager::_narrow(mobj);
@@ -707,7 +710,17 @@ namespace RTC
       {
         if (n->ns != nullptr)
         {
+          try
+          {
             n->ns->unbindObject(name);
+          }
+          catch(...)
+          {
+            delete n->ns;
+            n->ns = nullptr;
+          }
+          
+           
         }
       }
     unregisterCompName(name);
@@ -821,13 +834,13 @@ namespace RTC
             return nullptr;
           }
       }
-	else if (m == "manager")
-	{
-		NamingBase* name;
-		CORBA::ORB_var orb = m_manager->getORB();
-		name = new NamingOnManager(orb.in(), m_manager);
-		return name;
-	}
+    else if (m == "manager")
+      {
+        NamingBase* name;
+        CORBA::ORB_var orb = m_manager->getORB();
+        name = new NamingOnManager(orb.in(), m_manager);
+        return name;
+      }
     return nullptr;
   }
 
@@ -842,7 +855,15 @@ namespace RTC
   {
       for (auto & compName : m_compNames)
       {
-        ns->bindObject(compName->name.c_str(), compName->rtobj);
+        try
+        {
+          ns->bindObject(compName->name.c_str(), compName->rtobj);
+        }
+        catch(...)
+        {
+        }
+        
+        
       }
   }
 
@@ -994,19 +1015,18 @@ namespace RTC
    * @endif
    */
   RTCList NamingManager::string_to_component(const std::string& name)
-  {
-	  
-	  for (auto & n : m_names) {
-		  if (n->ns != nullptr)
-		  {
-			  RTCList comps = n->ns->string_to_component(name);
-			  if (comps.length() > 0)
-			  {
-				  return comps;
-			  }
-		  }
-	  }
-	  
-	  return RTCList();
+  {  
+    for (auto & n : m_names) {
+      if (n->ns != nullptr)
+      {
+        RTCList comps = n->ns->string_to_component(name);
+        if (comps.length() > 0)
+        {
+            return comps;
+        }
+      }
+    }
+    
+    return RTCList();
   }
 } // namespace RTC
