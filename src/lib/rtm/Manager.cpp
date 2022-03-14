@@ -2676,9 +2676,16 @@ std::vector<coil::Properties> Manager::getLoadableModules()
             configs["interface_type"] = "corba_cdr";
           }
 
-        coil::vstring tmp = coil::split(port0_str, ".");
-        tmp.pop_back();
-        std::string comp0_name = coil::flatten(tmp, ".");
+        size_t pos_port0 = port0_str.find_last_of(".");
+        std::string comp0_name;
+        if (pos_port0 != std::string::npos)
+        {
+          comp0_name = port0_str.substr(0, pos_port0);
+        }
+        else
+        {
+          comp0_name = port0_str;
+        }
 
         std::string port0_name = port0_str;
         RTObject_impl* comp0 = nullptr;
@@ -2703,14 +2710,29 @@ std::vector<coil::Properties> Manager::getLoadableModules()
                 continue;
               }
             comp0_ref = RTObject::_duplicate(rtcs[0]);
-            coil::vstring tmp_port0_name = coil::split(port0_str, "/");
-            port0_name = tmp_port0_name.back();
+            size_t pos_port0_name = port0_str.find_last_of("/");
+            if (pos_port0_name != std::string::npos)
+            {
+              port0_name = port0_str.substr(pos_port0_name + 1);
+            }
+            
           }
 
-        RTC::PortService_var port0_var = CORBA_RTCUtil::get_port_by_name(comp0_ref.in(), port0_name);
+        RTC::PortService_var port0_var = RTC::PortService::_nil();
+        
+        try
+          {
+            port0_var = CORBA_RTCUtil::get_port_by_name(comp0_ref.in(), port0_name);
+          }
+        catch (...)
+          {
+            RTC_ERROR(("Could not get port %s: ", port0_str.c_str()));
+            continue;
+          }
+
         if (CORBA::is_nil(port0_var))
           {
-            RTC_DEBUG(("port %s found: ", port0_str.c_str()));
+            RTC_DEBUG(("port %s not found: ", port0_str.c_str()));
             continue;
           }
 
@@ -2727,18 +2749,41 @@ std::vector<coil::Properties> Manager::getLoadableModules()
                 prop["dataport." + key] = value;
               }
 
-            if (RTC::RTC_OK != CORBA_RTCUtil::connect(connector, prop, port0_var.in(), RTC::PortService::_nil()))
+            RTC::ReturnCode_t retcon{RTC::RTC_OK};
+
+            try
+              {
+                retcon = CORBA_RTCUtil::connect(connector, prop, port0_var.in(), RTC::PortService::_nil());
+              }
+            catch (...)
+              {
+                RTC_ERROR(("Connection failed: %s: ", connector.c_str()));
+                continue;
+              }
+
+            if (RTC::RTC_OK != retcon)
               {
                 RTC_ERROR(("Connection error: %s", connector.c_str()));
               }
+
           }
 
         for (auto const& port : ports)
           {
-            tmp = coil::split(port, ".");
-            tmp.pop_back();
-            std::string comp_name = coil::flatten(tmp, ".");
+            size_t pos_port = port.find_last_of(".");
+            std::string comp_name;
+            
+            if (pos_port != std::string::npos)
+            {
+              comp_name = port.substr(0, pos_port);
+            }
+            else
+            {
+              comp_name = port;
+            }
+
             std::string port_name = port;
+            
             RTObject_impl* comp = nullptr;
             RTC::RTObject_var comp_ref;
 
@@ -2761,15 +2806,25 @@ std::vector<coil::Properties> Manager::getLoadableModules()
                     continue;
                   }
                 comp_ref = RTObject::_duplicate(rtcs[0]);
-                coil::vstring tmp_port_name = coil::split(port, "/");
-                port_name = tmp_port_name.back();
+                size_t pos_port_name = port.find_last_of("/");
+                port_name = port.substr(pos_port_name + 1);
               }
 
-            RTC::PortService_var port_var = CORBA_RTCUtil::get_port_by_name(comp_ref.in(), port_name);
+            RTC::PortService_var port_var = RTC::PortService::_nil();
+
+            try
+              {
+                port_var = CORBA_RTCUtil::get_port_by_name(comp_ref.in(), port_name);
+              }
+            catch (...)
+              {
+                RTC_ERROR(("Could not get port %s: ", port0_str.c_str()));
+                continue;
+              }
 
             if (CORBA::is_nil(port_var))
               {
-                RTC_DEBUG(("port %s found: ", port.c_str()));
+                RTC_DEBUG(("port %s not found: ", port.c_str()));
                 continue;
               }
 
@@ -2781,7 +2836,20 @@ std::vector<coil::Properties> Manager::getLoadableModules()
                 prop["dataport." + key] = std::move(value);
               }
 
-            if (RTC::RTC_OK != CORBA_RTCUtil::connect(connector, prop, port0_var.in(), port_var.in()))
+
+            RTC::ReturnCode_t retcon{ RTC::RTC_OK };
+
+            try
+              {
+                retcon = CORBA_RTCUtil::connect(connector, prop, port0_var.in(), port_var.in());
+              }
+            catch (...)
+              {
+                RTC_ERROR(("Connection failed: %s: ", connector.c_str()));
+                continue;
+              }
+
+            if (RTC::RTC_OK != retcon)
               {
                 RTC_ERROR(("Connection error: %s", connector.c_str()));
               }
@@ -2833,15 +2901,25 @@ std::vector<coil::Properties> Manager::getLoadableModules()
                   }
                 comp_ref = RTObject::_duplicate(rtcs[0]);
               }
-            RTC::ReturnCode_t ret = CORBA_RTCUtil::activate(comp_ref.in());
+
+            RTC::ReturnCode_t ret{RTC::RTC_OK};
+            try
+              {
+                ret = CORBA_RTCUtil::activate(comp_ref.in());
+              }
+            catch (...)
+              {
+                RTC_ERROR(("%s activation filed.", c.c_str()));
+                continue;
+              }
             if (ret != RTC::RTC_OK)
               {
                 RTC_ERROR(("%s activation filed.", c.c_str()));
               }
             else
-            {
-              RTC_INFO(("%s activated.", c.c_str()));
-            }
+              {
+                RTC_INFO(("%s activated.", c.c_str()));
+              }
           }
       }
   }
@@ -3052,9 +3130,17 @@ std::vector<coil::Properties> Manager::getLoadableModules()
     for (CORBA::ULong i(0); i < target_ports->length(); ++i)
       {
         if (port->_is_equivalent(target_ports[i])) { continue; }
-        if (CORBA_RTCUtil::already_connected(port, target_ports[i]))
+        try
           {
-              continue;
+            if (CORBA_RTCUtil::already_connected(port, target_ports[i]))
+              {
+                continue;
+              }
+          }
+        catch (...)
+          {
+            RTC_ERROR(("error in already_connected function."));
+            continue;
           }
         std::string con_name;
         PortProfile_var p0 = port->get_port_profile();
@@ -3063,10 +3149,17 @@ std::vector<coil::Properties> Manager::getLoadableModules()
         con_name += ":";
         con_name += p1->name;
         coil::Properties prop;
-        if (RTC::RTC_OK !=
-            CORBA_RTCUtil::connect(con_name, prop, port, target_ports[i]))
+        try
           {
-            RTC_ERROR(("Connection error in topic connection."));
+            if (RTC::RTC_OK !=
+              CORBA_RTCUtil::connect(con_name, prop, port, target_ports[i]))
+            {
+              RTC_ERROR(("Connection error in topic connection."));
+            }
+          }
+        catch (...)
+          {
+            RTC_ERROR(("connection failed: %s", con_name.c_str()));
           }
       }
   }
@@ -3077,8 +3170,18 @@ std::vector<coil::Properties> Manager::getLoadableModules()
     for (CORBA::ULong i(0); i < target_ports->length(); ++i)
       {
         if (port->_is_equivalent(target_ports[i])) { continue; }
-        if (CORBA_RTCUtil::already_connected(port, target_ports[i]))
-          { continue; }
+        try
+          {
+            if (CORBA_RTCUtil::already_connected(port, target_ports[i]))
+            {
+              continue;
+            }
+          }
+        catch (...)
+          {
+            RTC_ERROR(("error in already_connected function."));
+            continue;
+          }
         std::string con_name;
         PortProfile_var p0 = port->get_port_profile();
         PortProfile_var p1 = target_ports[i]->get_port_profile();
@@ -3086,10 +3189,17 @@ std::vector<coil::Properties> Manager::getLoadableModules()
         con_name += ":";
         con_name += p1->name;
         coil::Properties prop;
-        if (RTC::RTC_OK !=
-            CORBA_RTCUtil::connect(con_name, prop, port, target_ports[i]))
+        try
           {
-            RTC_ERROR(("Connection error in topic connection."));
+            if (RTC::RTC_OK !=
+              CORBA_RTCUtil::connect(con_name, prop, port, target_ports[i]))
+            {
+              RTC_ERROR(("Connection error in topic connection."));
+            }
+          }
+        catch (...)
+          {
+            RTC_ERROR(("connection failed: %s", con_name.c_str()));
           }
       }
   }
