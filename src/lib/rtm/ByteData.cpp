@@ -1,7 +1,7 @@
 ﻿#include "ByteData.h"
 #include "ByteDataStreamBase.h"
 #include <cstring>
-#include <iostream>
+
 
 namespace RTC
 {
@@ -170,7 +170,6 @@ namespace RTC
      */
     ByteData& ByteData::operator= (ByteDataStreamBase &rhs)
     {
-      
       if (!m_external_buffer)
       {
         delete[] m_buf;

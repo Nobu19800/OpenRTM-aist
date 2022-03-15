@@ -593,7 +593,8 @@ namespace RTC
       }
 
 
-      cdr->writeData(cdrdata.getBuffer(), cdrdata.getDataLength());
+      //cdr->writeData(cdrdata.getBuffer(), cdrdata.getDataLength());
+      cdrdata.copyToData(cdr);
 
       cdr->deserialize(data);
 

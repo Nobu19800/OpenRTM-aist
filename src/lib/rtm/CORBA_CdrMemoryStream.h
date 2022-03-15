@@ -42,16 +42,6 @@
   */
 namespace RTC
 {
-
-  class OpenRTMCdrStream : public cdrMemoryStream
-  {
-  public:
-    OpenRTMCdrStream();
-    OpenRTMCdrStream(void* databuffer, size_t maxLen);
-    ~OpenRTMCdrStream();
-    void getOctetStream(_CORBA_Octet*& databuffer, bool extbuff=true);
-    void copy(OpenRTMCdrStream& cdrstream);
-  };
     /*!
      * @if jp
      * @class CORBA_CdrMemoryStream

@@ -20,7 +20,6 @@
 
 
 #include <rtm/CORBA_CdrMemoryStream.h>
-#include <iostream>
 
 
 
@@ -40,52 +39,6 @@
   */
 namespace RTC
 {
-  OpenRTMCdrStream::OpenRTMCdrStream() : cdrMemoryStream()
-  {
-  }
-  OpenRTMCdrStream::OpenRTMCdrStream(void* databuffer, size_t maxLen) : cdrMemoryStream(databuffer, maxLen)
-  {
-  }
-  OpenRTMCdrStream::~OpenRTMCdrStream()
-  {
-  }
-  void OpenRTMCdrStream::getOctetStream(_CORBA_Octet*& databuffer, bool /*extbuff*/)
-  {
-    
-    //void* begin = pd_bufp_8;
-    //CORBA::ULong max = static_cast<CORBA::ULong>((omni::ptr_arith_t)pd_outb_end - (omni::ptr_arith_t)begin);
-    //CORBA::ULong len = static_cast<CORBA::ULong>((omni::ptr_arith_t)pd_outb_mkr - (omni::ptr_arith_t)begin);
-    //std::cout << max << "\t" << len << std::endl;
-    
-
-    databuffer = (CORBA::Octet*)pd_bufp_8;
-    //pd_readonly_and_external_buffer = 1;
-    //pd_valueTracker = nullptr;
-    //pd_bufp = new CORBA::Octet[1];
-    //pd_bufp_8 = pd_bufp;
-    //OpenRTMCdrStream cdrstream;
-    //copy(cdrstream);
-
-    //std::cout << max << "\t" << len << std::endl;
-
-    //databuffer = new CORBA::Octet[max];
-    //memcpy((void*)databuffer, (void*)begin, len);
-
-  }
-
-  void OpenRTMCdrStream::copy(OpenRTMCdrStream& cdrstream)
-  {
-    pd_readonly_and_external_buffer = 0;
-    pd_clear_memory = cdrstream.pd_clear_memory;
-    pd_bufp = cdrstream.pd_bufp;
-    pd_bufp_8 = cdrstream.pd_bufp_8;
-    pd_outb_end = cdrstream.pd_outb_end;
-    rewindPtrs();
-    pd_tcs_c = cdrstream.pd_tcs_c;
-    pd_tcs_w = cdrstream.pd_tcs_w;
-    cdrstream.pd_readonly_and_external_buffer = 1;
-
-  }
 
     CORBA_CdrMemoryStream::CORBA_CdrMemoryStream()
     {
