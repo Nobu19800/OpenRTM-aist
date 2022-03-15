@@ -166,10 +166,11 @@ namespace RTC
     // set endian type
     bool endian_type = m_connector->isLittleEndian();
     RTC_TRACE(("connector endian: %s", endian_type ? "little":"big"));
-
+    //m_cdr = ByteData();
     m_cdr.isLittleEndian(endian_type);
 #ifndef ORB_IS_RTORB
-    m_cdr.writeData(const_cast<unsigned char*>(data.get_buffer()), static_cast<CORBA::ULong>(data.length()));
+    //m_cdr.writeData(const_cast<unsigned char*>(data.get_buffer()), static_cast<CORBA::ULong>(data.length()));
+    m_cdr.copyToData(const_cast<unsigned char*>(data.get_buffer()), static_cast<CORBA::ULong>(data.length()));
 #else
     m_cdr.writeData(reinterpret_cast<unsigned char*>(&data[0]), static_cast<CORBA::ULong>(data.length()));
 #endif

@@ -91,7 +91,8 @@ namespace RTC
     RTC_TRACE(("write()"));
     RTC_PARANOID(("data size = %d bytes", data->getDataLength()));
     
-    return m_publisher->write(data, std::chrono::seconds::zero());
+    DataPortStatus ret = m_publisher->write(data, std::chrono::seconds::zero());
+    return ret;
   }
 
   /*!

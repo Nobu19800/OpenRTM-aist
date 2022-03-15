@@ -1,6 +1,7 @@
 ﻿#include "ByteData.h"
 #include "ByteDataStreamBase.h"
 #include <cstring>
+#include <iostream>
 
 namespace RTC
 {
@@ -39,7 +40,10 @@ namespace RTC
      */
     ByteData::~ByteData()
     {
+      if (!m_external_buffer)
+      {
         delete[] m_buf;
+      }
     }
 
     /*!
@@ -59,93 +63,140 @@ namespace RTC
      *
      * @endif
      */
-    ByteData::ByteData(const ByteData &rhs)
+    ByteData::ByteData(ByteData &rhs)
     {
+      m_len = rhs.m_len;
+      m_buf = rhs.m_buf;
+      rhs.m_external_buffer = true;
+    }
+    ByteData::ByteData(const ByteData& rhs)
+    {
+      m_len = rhs.m_len;
+      m_buf = new unsigned char[m_len];
+      memcpy(m_buf, rhs.m_buf, m_len);
+    }
+
+
+    /*!
+     * @if jp
+     *
+     * @brief コピーコンストラクタ
+     *
+     * @param rhs
+     *
+     *
+     * @else
+     *
+     * @brief Copy Constructor
+     *
+     * @param rhs
+     *
+     * @endif
+     */
+    ByteData::ByteData(ByteDataStreamBase &rhs)
+    {
+      m_len = rhs.getDataLength();
+      rhs.copyFromData(m_buf, m_len);
+    }
+    ByteData::ByteData(const ByteDataStreamBase& rhs)
+    {
+      m_len = rhs.getDataLength();
+      m_buf = new unsigned char[m_len];
+      rhs.readData(m_buf, m_len);
+    }
+    /*!
+     * @if jp
+     *
+     * @brief 代入演算子
+     *
+     * @param rhs
+     * @return
+     *
+     *
+     * @else
+     *
+     * @brief
+     *
+     * @param rhs
+     * @return
+     *
+     * @endif
+     */
+    ByteData& ByteData::operator= (ByteData &rhs)
+    {
+      if (!m_external_buffer)
+      {
+        delete[] m_buf;
+        m_buf = nullptr;
+      }
+      m_len = rhs.m_len;
+      m_buf = rhs.m_buf;
+      rhs.m_external_buffer = true;
+      m_external_buffer = false;
+      return *this;
+    }
+    ByteData& ByteData::operator= (const ByteData& rhs)
+    {
+      if (m_len != rhs.m_len)
+      {
         m_len = rhs.m_len;
+        if (!m_external_buffer)
+        {
+          delete[] m_buf;
+          m_buf = nullptr;
+        }
         m_buf = new unsigned char[m_len];
-        memcpy(m_buf, rhs.m_buf, m_len);
+      }
+      memcpy(m_buf, rhs.m_buf, m_len);
+      return *this;
     }
-
-
     /*!
      * @if jp
      *
-     * @brief コピーコンストラクタ
+     * @brief 代入演算子
      *
      * @param rhs
+     * @return
      *
      *
      * @else
      *
-     * @brief Copy Constructor
+     * @brief
      *
      * @param rhs
+     * @return
      *
      * @endif
      */
-    ByteData::ByteData(const ByteDataStreamBase &rhs)
+    ByteData& ByteData::operator= (ByteDataStreamBase &rhs)
     {
+      
+      if (!m_external_buffer)
+      {
+        delete[] m_buf;
+        m_buf = nullptr;
+      }
+      
+      m_len = rhs.getDataLength();
+      rhs.copyFromData(m_buf, m_len);
+      m_external_buffer = true;
+ 
+      return *this;
+      
+    }
+    ByteData& ByteData::operator= (const ByteDataStreamBase& rhs)
+    {
+      if (m_len != rhs.getDataLength())
+      {
         m_len = rhs.getDataLength();
+        if (!m_external_buffer)
+        {
+          delete[] m_buf;
+        }
         m_buf = new unsigned char[m_len];
-        rhs.readData(m_buf, m_len);
-    }
-    /*!
-     * @if jp
-     *
-     * @brief 代入演算子
-     *
-     * @param rhs
-     * @return
-     *
-     *
-     * @else
-     *
-     * @brief
-     *
-     * @param rhs
-     * @return
-     *
-     * @endif
-     */
-    ByteData& ByteData::operator= (const ByteData &rhs)
-    {
-        if(m_len != rhs.m_len)
-        {
-            m_len = rhs.m_len;
-            delete[] m_buf;
-            m_buf = new unsigned char[m_len];
-        }
-        memcpy(m_buf, rhs.m_buf, m_len);
-        return *this;
-    }
-    /*!
-     * @if jp
-     *
-     * @brief 代入演算子
-     *
-     * @param rhs
-     * @return
-     *
-     *
-     * @else
-     *
-     * @brief
-     *
-     * @param rhs
-     * @return
-     *
-     * @endif
-     */
-    ByteData& ByteData::operator= (const ByteDataStreamBase &rhs)
-    {
-        if(m_len != rhs.getDataLength())
-        {
-            m_len = rhs.getDataLength();
-            delete[] m_buf;
-            m_buf = new unsigned char[m_len];
-        }
-        rhs.readData(m_buf, m_len);
-        return *this;
+      }
+      rhs.readData(m_buf, m_len);
+      return *this;
     }
     /*!
      * @if jp
@@ -249,11 +300,65 @@ namespace RTC
 
         if(m_len != length)
         {
+          if (!m_external_buffer)
+          {
             delete[] m_buf;
-            m_len = length;
-            m_buf = new unsigned char[length];
+          }
+          m_len = length;
+          m_buf = new unsigned char[length];
         }
         memcpy(m_buf, data, length);
+    }
+    /*!
+     * @if jp
+     *
+     * @brief 引数の変数にデータを格納
+     *
+     * @param data 書き込み先の変数
+     * @param length データの長さ
+     * @return
+     *
+     *
+     * @else
+     *
+     * @brief
+     *
+     * @param data
+     * @param length
+     * @return
+     *
+     * @endif
+     */
+    void ByteData::copyFromData(unsigned char*& data, unsigned long /*length*/) const
+    {
+      data = m_buf;
+    }
+
+    /*!
+     * @if jp
+     *
+     * @brief 内部の変数にデータを格納
+     *
+     * @param data 書き込み元の変数
+     * @param length データの長さ
+     * @return
+     *
+     *
+     * @else
+     *
+     * @brief
+     *
+     * @param data
+     * @param length
+     * @return
+     *
+     * @endif
+     */
+    void ByteData::copyToData(unsigned char* data, unsigned long length)
+    {
+      m_len = length;
+      m_buf = data;
+      m_external_buffer = true;
     }
     /*!
      * @if jp
@@ -299,8 +404,10 @@ namespace RTC
         {
             return;
         }
-        delete[] m_buf;
-
+        if (!m_external_buffer)
+        {
+          delete[] m_buf;
+        }
         m_len = length;
         m_buf = new unsigned char[m_len];
     }
@@ -325,4 +432,37 @@ namespace RTC
     {
         return m_little_endian;
     }
+
+    void ByteData::setExternalBuffer(const bool ext)
+    {
+      m_external_buffer = ext;
+    }
+
+    void ByteData::copyFromData(ByteDataStreamBase& data)
+    {
+      m_len = data.getDataLength();
+      data.copyFromData(m_buf, m_len);
+      m_external_buffer = true;
+    }
+
+    void ByteData::copyToData(ByteDataStreamBase& data)
+    {
+      data.copyToData(m_buf, m_len);
+      //m_external_buffer = true;
+    }
+
+    void ByteData::copyFromData(ByteDataStreamBase* data)
+    {
+      m_len = data->getDataLength();
+      data->copyFromData(m_buf, m_len);
+      m_external_buffer = true;
+    }
+
+    void ByteData::copyToData(ByteDataStreamBase* data)
+    {
+      data->copyToData(m_buf, m_len);
+      //m_external_buffer = true;
+    }
+
+
 } // namespace RTC

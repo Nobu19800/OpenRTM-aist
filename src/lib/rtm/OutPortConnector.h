@@ -263,7 +263,7 @@ namespace RTC
       RTC_TRACE(("connector endian: %s", isLittleEndian() ? "little":"big"));
       
       // NOTE: need cast to ByteDataStreamBase* to call the another write()
-      DataPortStatus ret = write((ByteDataStreamBase*)cdr);
+      DataPortStatus ret = write(static_cast<ByteDataStreamBase*>(cdr));
 
       return ret;
     }

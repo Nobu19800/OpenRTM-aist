@@ -391,6 +391,12 @@ namespace RTC
      *
      * @endif
      */
+    BufferStatus set(DataType& value) override
+    {
+      std::lock_guard<std::mutex> guard(m_posmutex);
+      m_buffer[m_wpos] = value;
+      return BufferStatus::OK;
+    }
     BufferStatus put(const DataType& value) override
     {
       std::lock_guard<std::mutex> guard(m_posmutex);
@@ -438,6 +444,59 @@ namespace RTC
      *
      * @endif
      */
+    BufferStatus copy(DataType& value,
+                       std::chrono::nanoseconds timeout
+                       = std::chrono::nanoseconds(-1)) override
+    {
+      {
+      std::unique_lock<std::mutex> guard(m_full.mutex);
+
+      if (full())
+        {
+
+          bool timedwrite(m_timedwrite);
+          bool overwrite(m_overwrite);
+
+          if (timeout >= std::chrono::seconds::zero())  // block mode
+            {
+              timedwrite = true;
+              overwrite  = false;
+            }
+
+          if (overwrite && !timedwrite)  // "overwrite" mode
+            {
+              advanceRptr(1,false);
+            }
+          else if (!overwrite && !timedwrite)  // "do_nothing" mode
+            {
+              return BufferStatus::FULL;
+            }
+          else if (!overwrite && timedwrite)  // "block" mode
+            {
+              if (timeout < std::chrono::seconds::zero())
+                {
+                  timeout = m_wtimeout;
+                }
+              if (std::cv_status::timeout == m_empty.cond.wait_for(guard, timeout))
+                {
+                  return BufferStatus::TIMEOUT;
+                }
+            }
+          else                                    // unknown condition
+            {
+              return BufferStatus::PRECONDITION_NOT_MET;
+            }
+        }
+      }
+
+      set(value);
+
+      advanceWptr(1);
+
+
+      return BufferStatus::OK;
+    }
+
     BufferStatus write(const DataType& value,
                        std::chrono::nanoseconds timeout
                        = std::chrono::nanoseconds(-1)) override

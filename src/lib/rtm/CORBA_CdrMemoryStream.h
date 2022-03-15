@@ -42,6 +42,16 @@
   */
 namespace RTC
 {
+
+  class OpenRTMCdrStream : public cdrMemoryStream
+  {
+  public:
+    OpenRTMCdrStream();
+    OpenRTMCdrStream(void* databuffer, size_t maxLen);
+    ~OpenRTMCdrStream();
+    void getOctetStream(_CORBA_Octet*& databuffer, bool extbuff=true);
+    void copy(OpenRTMCdrStream& cdrstream);
+  };
     /*!
      * @if jp
      * @class CORBA_CdrMemoryStream
@@ -304,6 +314,27 @@ namespace RTC
         /*!
          * @if jp
          *
+         * @brief このインスタンスのバッファにデータを書き込む
+         *
+         * @param buffer 書き込み元のバッファ
+         * @param length バッファの長さ
+         *
+         *
+         * @else
+         *
+         * @brief
+         *
+         * @param buffer
+         * @param length
+         *
+         *
+         * @endif
+         */
+        void copyToCdrData(unsigned char* buffer, unsigned long length);
+
+        /*!
+         * @if jp
+         *
          * @brief 引数のバッファにデータを書き込む
          *
          * @param buffer 書き込み先のバッファ
@@ -324,6 +355,27 @@ namespace RTC
 
         /*!
          * @if jp
+         *
+         * @brief 引数のバッファにデータを書き込む
+         *
+         * @param buffer 書き込み先のバッファ
+         * @param length バッファの長さ
+         *
+         *
+         * @else
+         *
+         * @brief
+         *
+         * @param buffer
+         * @param length
+         *
+         *
+         * @endif
+         */
+        void copyFromCdrData(unsigned char*& buffer, unsigned long length);
+
+        /*!
+         * @if jp
          * @brief コピーコンストラクタ
          *
          * @param rhs
@@ -335,19 +387,7 @@ namespace RTC
          *
          * @endif
          */
-        CORBA_CdrMemoryStream(const CORBA_CdrMemoryStream &rhs)
-        {
-#ifdef ORB_IS_ORBEXPRESS
-            m_cdr.copy(rhs.m_cdr);
-#elif defined(ORB_IS_TAO)
-        for (const ACE_Message_Block *i = rhs.m_cdr.begin(); i != nullptr; i = i->cont())
-        {
-            m_cdr.write_octet_array_mb(i);
-        }
-#else
-            m_cdr = rhs.m_cdr;
-#endif
-        }
+        CORBA_CdrMemoryStream(const CORBA_CdrMemoryStream& rhs);
 
 
         /*!
@@ -365,22 +405,7 @@ namespace RTC
          *
          * @endif
          */
-        CORBA_CdrMemoryStream& operator= (const CORBA_CdrMemoryStream &rhs)
-        {
-#ifdef ORB_IS_ORBEXPRESS
-            m_cdr.copy(rhs.m_cdr);
-            return *this;
-#elif defined(ORB_IS_TAO)
-            for (const ACE_Message_Block *i = rhs.m_cdr.begin(); i != nullptr; i = i->cont())
-            {
-                m_cdr.write_octet_array_mb(i);
-            }
-            return *this;
-#else
-            m_cdr = rhs.m_cdr;
-            return *this;
-#endif
-        }
+        CORBA_CdrMemoryStream& operator= (const CORBA_CdrMemoryStream& rhs);
 
     protected:
 #ifdef ORB_IS_ORBEXPRESS
@@ -388,7 +413,7 @@ namespace RTC
 #elif defined(ORB_IS_TAO)
         TAO_OutputCDR m_cdr;
 #else
-        cdrMemoryStream m_cdr;
+      cdrMemoryStream m_cdr;
 #endif
         bool m_endian{true};
     };
@@ -487,6 +512,27 @@ namespace RTC
 
         /*!
          * @if jp
+         * @brief 保持しているバッファにデータを書き込む
+         *
+         * @param buffer 書き込み元のバッファ
+         * @param length データのサイズ
+         *
+         * @else
+         * @brief
+         *
+         * @param buffer
+         * @param length
+         *
+         *
+         * @endif
+         */
+        void copyToData(unsigned char* buffer, unsigned long length) override
+        {
+            m_cdr.copyToCdrData(buffer, length);
+        }
+
+        /*!
+         * @if jp
          * @brief 引数のバッファにデータを書き込む
          *
          * @param buffer 書き込み先のバッファ
@@ -504,6 +550,27 @@ namespace RTC
         void readData(unsigned char* buffer, unsigned long length) const override
         {
             m_cdr.readCdrData(buffer, length);
+        }
+
+        /*!
+         * @if jp
+         * @brief 引数のバッファにデータを書き込む
+         *
+         * @param buffer 書き込み先のバッファ
+         * @param length データのサイズ
+         *
+         * @else
+         * @brief
+         *
+         * @param buffer
+         * @param length
+         *
+         *
+         * @endif
+         */
+        void copyFromData(unsigned char*& buffer, unsigned long length) override
+        {
+          m_cdr.copyFromCdrData(buffer, length);
         }
 
         /*!
