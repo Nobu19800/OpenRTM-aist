@@ -104,7 +104,7 @@ namespace CORBA_RTCUtil
    * @endif
    */
   RTC::ExecutionContext_ptr get_actual_ec(const RTC::RTObject_ptr rtc,
-                                          RTC::UniqueId ec_id)
+                                          const RTC::UniqueId ec_id)
   {
     if (CORBA::is_nil(rtc)) { return RTC::ExecutionContext::_nil(); }
     if (ec_id < 1000) // owned EC
@@ -204,7 +204,7 @@ namespace CORBA_RTCUtil
    * @return
    * @endif
    */
-  RTC::ReturnCode_t activate(RTC::RTObject_ptr rtc, RTC::UniqueId ec_id)
+  RTC::ReturnCode_t activate(const RTC::RTObject_ptr rtc, const RTC::UniqueId ec_id)
   {
     if (CORBA::is_nil(rtc)) { return RTC::BAD_PARAMETER; }
     RTC::ExecutionContext_var ec = get_actual_ec(rtc, ec_id);
@@ -225,7 +225,7 @@ namespace CORBA_RTCUtil
    * @return
    * @endif
    */
-  RTC::ReturnCode_t deactivate(RTC::RTObject_ptr rtc, RTC::UniqueId ec_id)
+  RTC::ReturnCode_t deactivate(const RTC::RTObject_ptr rtc, const RTC::UniqueId ec_id)
   {
     if (CORBA::is_nil(rtc)) { return RTC::BAD_PARAMETER; }
     RTC::ExecutionContext_var ec = get_actual_ec(rtc, ec_id);
@@ -246,7 +246,7 @@ namespace CORBA_RTCUtil
    * @return
    * @endif
    */
-  RTC::ReturnCode_t reset(RTC::RTObject_ptr rtc, RTC::UniqueId ec_id)
+  RTC::ReturnCode_t reset(const RTC::RTObject_ptr rtc, const RTC::UniqueId ec_id)
   {
     if (CORBA::is_nil(rtc)) { return RTC::BAD_PARAMETER; }
     RTC::ExecutionContext_var ec = get_actual_ec(rtc, ec_id);
@@ -269,7 +269,7 @@ namespace CORBA_RTCUtil
    * @return 
    * @endif
    */
-  bool get_state(RTC::LifeCycleState &state, const RTC::RTObject_ptr rtc, RTC::UniqueId ec_id)
+  bool get_state(RTC::LifeCycleState &state, const RTC::RTObject_ptr rtc, const RTC::UniqueId ec_id)
   {
     if (CORBA::is_nil(rtc))
       {
@@ -299,7 +299,7 @@ namespace CORBA_RTCUtil
    * @return 
    * @endif
    */
-  bool is_in_inactive(const RTC::RTObject_ptr rtc, RTC::UniqueId ec_id)
+  bool is_in_inactive(const RTC::RTObject_ptr rtc, const RTC::UniqueId ec_id)
   {
     RTC::LifeCycleState state = RTC::CREATED_STATE;
     if (get_state(state, rtc, ec_id))
@@ -327,7 +327,7 @@ namespace CORBA_RTCUtil
    * @return 
    * @endif
    */
-  bool is_in_active(const RTC::RTObject_ptr rtc, RTC::UniqueId ec_id)
+  bool is_in_active(const RTC::RTObject_ptr rtc, const RTC::UniqueId ec_id)
   {
     RTC::LifeCycleState state = RTC::CREATED_STATE;
     if (get_state(state, rtc, ec_id))
@@ -353,7 +353,7 @@ namespace CORBA_RTCUtil
    * @return 
    * @endif
    */
-  bool is_in_error(const RTC::RTObject_ptr rtc, RTC::UniqueId ec_id)
+  bool is_in_error(const RTC::RTObject_ptr rtc, const RTC::UniqueId ec_id)
   {
     RTC::LifeCycleState state = RTC::CREATED_STATE;
     if (get_state(state, rtc, ec_id))
@@ -399,7 +399,7 @@ namespace CORBA_RTCUtil
    * @return 
    * @endif
    */
-  RTC::ReturnCode_t set_default_rate(RTC::RTObject_ptr rtc, const CORBA::Double rate)
+  RTC::ReturnCode_t set_default_rate(const RTC::RTObject_ptr rtc, const CORBA::Double rate)
   {
     RTC::ExecutionContext_var ec = get_actual_ec(rtc);
     if (CORBA::is_nil(ec))
@@ -421,7 +421,7 @@ namespace CORBA_RTCUtil
    * @return 
    * @endif
    */
-  CORBA::Double get_current_rate(const RTC::RTObject_ptr rtc, RTC::UniqueId ec_id)
+  CORBA::Double get_current_rate(const RTC::RTObject_ptr rtc, const RTC::UniqueId ec_id)
   {
     RTC::ExecutionContext_var ec = get_actual_ec(rtc, ec_id);
     if (CORBA::is_nil(ec))
@@ -446,7 +446,7 @@ namespace CORBA_RTCUtil
    * @return 
    * @endif
    */
-  RTC::ReturnCode_t set_current_rate(RTC::RTObject_ptr rtc, RTC::UniqueId ec_id, const CORBA::Double rate)
+  RTC::ReturnCode_t set_current_rate(const RTC::RTObject_ptr rtc, const RTC::UniqueId ec_id, const CORBA::Double rate)
   {
     RTC::ExecutionContext_var ec = get_actual_ec(rtc, ec_id);
     if (CORBA::is_nil(ec))
@@ -1260,9 +1260,9 @@ namespace CORBA_RTCUtil
    * @endif
    */
   RTC::ReturnCode_t connect_by_name(const std::string& name, const coil::Properties& prop,
-                                    RTC::RTObject_ptr rtc0,
+                                    const RTC::RTObject_ptr rtc0,
                                     const std::string& portName0,
-                                    RTC::RTObject_ptr rtc1,
+                                    const RTC::RTObject_ptr rtc1,
                                     const std::string& portName1)
   {
     if (CORBA::is_nil(rtc0)) { return RTC::BAD_PARAMETER; }
