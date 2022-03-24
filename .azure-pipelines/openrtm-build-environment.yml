@@ -80,7 +80,7 @@ steps:
     targetType: 'inline'
     script: |
       Invoke-WebRequest -Uri "$(ninjaUrl)/$(ninja).zip" -OutFile "$(Agent.TempDirectory)\$(ninja).zip"
-      Expand-Archive -Path "$(Agent.TempDirectory)\$(ninja).zip" -DestinationPath "$(Pipeline.Workspace)"
+      Expand-Archive -Path "$(Agent.TempDirectory)\$(ninja).zip" -DestinationPath "$(Pipeline.Workspace)/$(ninja)"
 
 - script: choco install -y --no-progress openssl --version=${{ parameters.opensslVersion }}
   displayName: Install OpenSSL
