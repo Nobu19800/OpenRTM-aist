@@ -10,6 +10,15 @@ parameters:
   type: string
 - name: 'ros2Url'
   type: string
+- name: 'ninja'
+  type: string
+  default: 'ninja-win'
+- name: 'ninjaUrl'
+  type: string
+- name: 'ninjaVersion'
+  type: string
+  default: '1.10.2'
+
 
 steps:
 - task: UsePythonVersion@0
@@ -39,6 +48,13 @@ steps:
     path: '$(Pipeline.Workspace)\ros2-windows'
     cacheHitVar: ROS2_CACHE
 
+- task: Cache@2
+  displayName: Cache Ninja
+  inputs:
+    key: 'Ninja | "${{ parameters.ninjaVersion }}"'
+    path: '$(Pipeline.Workspace)\${{ parameters.ninja }}'
+    cacheHitVar: NINJA_CACHE
+
 - task: PowerShell@2
   displayName: Prepare omniORB
   condition: ne(variables.OMNIORB_CACHE, 'true')
@@ -56,6 +72,15 @@ steps:
     script: |
       Invoke-WebRequest -Uri "$(ros2Url)/$(ros2).zip" -OutFile "$(Agent.TempDirectory)\ros2-windows.zip"
       Expand-Archive -Path "$(Agent.TempDirectory)\ros2-windows.zip" -DestinationPath "$(Pipeline.Workspace)"
+
+- task: PowerShell@2
+  displayName: Prepare Ninja
+  condition: ne(variables.NINJA_CACHE, 'true')
+  inputs:
+    targetType: 'inline'
+    script: |
+      Invoke-WebRequest -Uri "$(ninjaUrl)/${{ parameters.ninja }}.zip" -OutFile "$(Agent.TempDirectory)\${{ parameters.ninja }}.zip"
+      Expand-Archive -Path "$(Agent.TempDirectory)\${{ parameters.ninja }}.zip" -DestinationPath "$(Pipeline.Workspace)"
 
 - script: choco install -y --no-progress openssl --version=${{ parameters.opensslVersion }}
   displayName: Install OpenSSL

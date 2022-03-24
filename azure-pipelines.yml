@@ -31,6 +31,9 @@ variables:
   omniorbUrl: https://openrtm.org/pub/omniORB/win32/omniORB-4.2.4
   ros2: ros2-dashing-20191213-windows-amd64
   ros2Url: https://github.com/ros2/ros2/releases/download/release-dashing-20191213/
+  ninja: ninja-win
+  ninjaUrl: https://github.com/ninja-build/ninja/releases/download/v1.10.2/
+  ninjaVersion: 1.10.2
 
 jobs:
   - job: Build
@@ -51,6 +54,9 @@ jobs:
           omniorbUrl: $(omniorbUrl)
           ros2: $(ros2)
           ros2Url: $(ros2Url)
+          ninja: $(ninja)
+          ninjaUrl: $(ninjaUrl)
+          ninjaVersion: $(ninjaVersion)
 
       - task: CMake@1
         env:
@@ -100,12 +106,16 @@ jobs:
           omniorbUrl: $(omniorbUrl)
           ros2: $(ros2)
           ros2Url: $(ros2Url)
+          ninja: $(ninja)
+          ninjaUrl: $(ninjaUrl)
+          ninjaVersion: $(ninjaVersion)
 
       - script: |
           call "$(vcPath)\Auxiliary\Build\vcvars64.bat"
           cmake ^
             -B $(Build.SourcesDirectory)/build ^
             -G Ninja ^
+            -DCMAKE_MAKE_PROGRAM=$(Pipeline.Workspace)\$(ninja) ^
             -DCMAKE_C_COMPILER:FILEPATH="$(vcPath)\Tools\Llvm\bin\clang-cl.exe" ^
             -DCMAKE_CXX_COMPILER:FILEPATH="$(vcPath)\Tools\Llvm\bin\clang-cl.exe" ^
             -DCMAKE_LINKER:FILEPATH="$(vcPath)\Tools\Llvm\bin\lld-link.exe" ^
