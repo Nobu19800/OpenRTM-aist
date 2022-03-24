@@ -94,7 +94,7 @@ jobs:
 
   - job: Analyze
     pool:
-      vmImage: 'windows-latest'
+      vmImage: 'windows-2019'
 
     variables:
       vcPath: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC'
