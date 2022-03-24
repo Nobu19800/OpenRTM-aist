@@ -115,7 +115,7 @@ jobs:
           cmake ^
             -B $(Build.SourcesDirectory)/build ^
             -G Ninja ^
-            -DCMAKE_MAKE_PROGRAM=$(Pipeline.Workspace)\$(ninja) ^
+            -DCMAKE_MAKE_PROGRAM=$(Pipeline.Workspace)\$(ninja)\ninja.exe ^
             -DCMAKE_C_COMPILER:FILEPATH="$(vcPath)\Tools\Llvm\bin\clang-cl.exe" ^
             -DCMAKE_CXX_COMPILER:FILEPATH="$(vcPath)\Tools\Llvm\bin\clang-cl.exe" ^
             -DCMAKE_LINKER:FILEPATH="$(vcPath)\Tools\Llvm\bin\lld-link.exe" ^
