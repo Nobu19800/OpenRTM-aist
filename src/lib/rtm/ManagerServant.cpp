@@ -414,16 +414,17 @@ namespace RTM
 
     RTC::RTObject_var rtobj;
     // create component by address
-    rtobj = createComponentByAddress(create_arg);
+    std::string manager_address;
+    rtobj = createComponentByAddress(create_arg, manager_address);
     if (!CORBA::is_nil(rtobj)) { return rtobj._retn(); }
+    else if (!manager_address.empty()) { return RTC::RTObject::_nil(); }
 
     // create component by manager's name
-    rtobj = createComponentByManagerName(create_arg);
+    std::string manager_name;
+    rtobj = createComponentByManagerName(create_arg, manager_name);
     if (!CORBA::is_nil(rtobj)) { return rtobj._retn(); }
+    else if (!manager_name.empty()) { return RTC::RTObject::_nil(); }
 
-
-    getParameterByModulename("manager_address", create_arg);
-    std::string manager_name = getParameterByModulename("manager_name", create_arg);
 
 
     CompParam comp_param(create_arg);
@@ -463,7 +464,7 @@ namespace RTM
         if (manager_name.empty())
           {
             create_arg = create_arg + "&manager_name=manager_%p";
-            rtobj = createComponentByManagerName(create_arg);
+            rtobj = createComponentByManagerName(create_arg, manager_name);
             if (!CORBA::is_nil(rtobj)) { return rtobj._retn(); }
           }
         return RTC::RTObject::_nil();
@@ -1184,7 +1185,7 @@ namespace RTM
    * @endif
    */
   RTC::RTObject_ptr
-  ManagerServant::createComponentByManagerName(const std::string& create_arg)
+  ManagerServant::createComponentByManagerName(std::string& create_arg, std::string& mgrstr)
   {
     RTC_TRACE(("createComponentByManagerName(%s)",create_arg.c_str()));
     coil::mapstring param = coil::urlparam2map(create_arg);
@@ -1194,7 +1195,7 @@ namespace RTM
                    p.first.c_str(), p.second.c_str()));
       }
 
-    std::string mgrstr = param["manager_name"];
+    mgrstr = param["manager_name"];
     if (mgrstr.empty())
       {
         RTC_WARN(("No manager_name found: %s", mgrstr.c_str()));
@@ -1227,8 +1228,9 @@ namespace RTM
           }
 
         std::string lang_path_key("manager.modules.");
-        lang_path_key += lang + ".load_path";
-        rtcd_cmd += " -o \"manager.modules.load_path:" + coil::escape(prop["manager.modules.load_path"]) + "," + coil::escape(prop[lang_path_key]) + "\"";
+        lang_path_key += lang + ".load_paths";
+        rtcd_cmd += " -o \"manager.modules.load_path:" + coil::escape(prop["manager.modules.load_path"]) + "\"";
+        rtcd_cmd += " -o \"" + lang_path_key + ":" + coil::escape(prop[lang_path_key]) + "\"";
         
         rtcd_cmd += " -o \"manager.is_master:NO\"";
         rtcd_cmd += " -o \"manager.corba_servant:YES\"";
@@ -1318,6 +1320,7 @@ namespace RTM
     getParameterByModulename("manager_name", create_arg_str);
     RTC_DEBUG(("Creating component on %s",  mgrstr.c_str()));
     RTC_DEBUG(("arg: %s", create_arg_str.c_str()));
+    create_arg = create_arg_str;
     try
       {
         return mgrobj->create_component(create_arg_str.c_str());
@@ -1342,7 +1345,7 @@ namespace RTM
    * @endif
    */
   RTC::RTObject_ptr
-  ManagerServant::createComponentByAddress(const std::string& create_arg)
+  ManagerServant::createComponentByAddress(std::string& create_arg, std::string& mgrstr)
   {
     RTC_TRACE(("createComponentByAddress(%s)",create_arg.c_str()));
     coil::mapstring param = coil::urlparam2map(create_arg);
@@ -1352,7 +1355,7 @@ namespace RTM
                    p.first.c_str(), p.second.c_str()));
       }
 
-    std::string mgrstr = param["manager_address"];
+    mgrstr = param["manager_address"];
     if (mgrstr.empty())
       {
         RTC_WARN(("No manager_address found: %s", mgrstr.c_str()));
@@ -1425,6 +1428,7 @@ namespace RTM
         getParameterByModulename("manager_address", create_arg_str);
         RTC_DEBUG(("Creating component on %s",  mgrstr.c_str()));
         RTC_DEBUG(("arg: %s", create_arg.c_str()));
+        create_arg = create_arg_str;
         try
           {
             return mgrobj->create_component(create_arg_str.c_str());
