@@ -122,7 +122,8 @@ namespace RTC
     }
     
     BufferStatus ret = m_buffer->read(m_data);
-    data->writeData(m_data.getBuffer(), m_data.getDataLength());
+    m_data.copyToData(data);
+    //data->writeData(m_data.getBuffer(), m_data.getDataLength());
 
     if (m_sync_readwrite)
     {

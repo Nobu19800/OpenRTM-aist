@@ -126,23 +126,57 @@ namespace RTC
       * @endif
       */
      virtual void writeData(const unsigned char *buffer, unsigned long length) = 0;
-   /*!
-     * @if jp
-     * @brief 引数のバッファにデータを書き込む
-     *
-     * @param buffer 書き込み先のバッファ
-     * @param length データのサイズ
-     *
-     * @else
-     * @brief
-     *
-     * @param buffer
-     * @param length
-     *
-     *
-     * @endif
-     */
+     /*!
+      * @if jp
+      * @brief 保持しているバッファにデータを書き込む
+      *
+      * @param buffer 書き込み元のバッファ
+      * @param length データのサイズ
+      *
+      * @else
+      * @brief
+      *
+      * @param buffer
+      * @param length
+      *
+      *
+      * @endif
+      */
+     virtual void copyToData(unsigned char* /*buffer*/, unsigned long /*length*/) {};
+     /*!
+      * @if jp
+      * @brief 引数のバッファにデータを書き込む
+      *
+      * @param buffer 書き込み先のバッファ
+      * @param length データのサイズ
+      *
+      * @else
+      * @brief
+      *
+      * @param buffer
+      * @param length
+      *
+      *
+      * @endif
+      */
      virtual void readData(unsigned char *buffer, unsigned long length) const = 0;
+     /*!
+      * @if jp
+      * @brief 引数のバッファにデータを書き込む
+      *
+      * @param buffer 書き込み先のバッファ
+      * @param length データのサイズ
+      *
+      * @else
+      * @brief
+      *
+      * @param buffer
+      * @param length
+      *
+      *
+      * @endif
+      */
+     virtual void copyFromData(unsigned char*& /*buffer*/, unsigned long /*length*/) {};
      /*!
       * @if jp
       * @brief データの長さを取得

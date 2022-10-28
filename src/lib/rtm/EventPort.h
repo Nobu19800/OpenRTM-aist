@@ -98,7 +98,7 @@ namespace RTC
       if (info.properties["fsm_event_name"] == m_eventName ||
           info.name == m_eventName)
         {
-            m_buffer.write(new Event1<P0>(this, data));
+            m_buffer.write(static_cast<EventBase*>(new Event1<P0>(this, data)));
           return NO_CHANGE;
         }
       return NO_CHANGE;

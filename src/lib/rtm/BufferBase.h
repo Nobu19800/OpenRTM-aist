@@ -278,6 +278,7 @@ namespace RTC
      *
      * @endif
      */
+    virtual BufferStatus set(DataType& value) = 0;
     virtual BufferStatus put(const DataType& value) = 0;
 
     /*!
@@ -305,6 +306,9 @@ namespace RTC
      *
      * @endif
      */
+    virtual BufferStatus copy(DataType& value,
+                               std::chrono::nanoseconds timeout
+                               = std::chrono::nanoseconds(-1)) = 0;
     virtual BufferStatus write(const DataType& value,
                                std::chrono::nanoseconds timeout
                                = std::chrono::nanoseconds(-1)) = 0;

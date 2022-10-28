@@ -232,7 +232,7 @@ namespace RTC
             return DataPortStatus::PORT_ERROR;
         }
         cdr->isLittleEndian(isLittleEndian());
-        DataPortStatus ret = read((ByteDataStreamBase*)cdr);
+        DataPortStatus ret = read(static_cast<ByteDataStreamBase*>(cdr));
         if (ret == DataPortStatus::PORT_OK)
         {
             cdr->deserialize(data);

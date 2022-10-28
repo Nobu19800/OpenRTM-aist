@@ -106,7 +106,8 @@ namespace RTC
         }
     }
 
-    m_buffer->write(*data);
+    ByteData tmp(*data);
+    m_buffer->write(tmp);
 
     if (m_sync_readwrite)
     {

@@ -39,6 +39,7 @@
   */
 namespace RTC
 {
+
     CORBA_CdrMemoryStream::CORBA_CdrMemoryStream()
     {
     }
@@ -104,6 +105,19 @@ namespace RTC
 #endif
     }
 
+    void CORBA_CdrMemoryStream::copyToCdrData(unsigned char* buffer, unsigned long length)
+    {
+#ifdef ORB_IS_ORBEXPRESS
+      m_cdr.write_array_1(buffer, length);
+#elif defined(ORB_IS_TAO)
+      m_cdr.write_octet_array((const unsigned char*)buffer, length);
+#elif defined(ORB_IS_RTORB)
+      m_cdr.put_octet_array(reinterpret_cast<char*>(const_cast<unsigned char*>(buffer)), length);
+#else
+      m_cdr = cdrMemoryStream(static_cast<CORBA::Octet*>(buffer), length);
+#endif
+    }
+
     void CORBA_CdrMemoryStream::readCdrData(unsigned char* buffer, unsigned long length) const
     {
 #ifdef ORB_IS_ORBEXPRESS
@@ -123,5 +137,58 @@ namespace RTC
 #endif
     }
 
+    void CORBA_CdrMemoryStream::copyFromCdrData(unsigned char*& buffer, unsigned long /*length*/)
+    {
+#ifdef ORB_IS_ORBEXPRESS
+      length = tmp_data.cdr.size_written();
+      m_cdr.read_array_1(buffer, length);
+#elif defined(ORB_IS_TAO)
+      (void)length;
+      CORBA::Octet* buf = (CORBA::Octet*)buffer;
+      for (const ACE_Message_Block* i = m_cdr.begin(); i != nullptr; i = i->cont())
+      {
+        const size_t len = i->length();
+        ACE_OS::memcpy(buf, i->rd_ptr(), len);
+        buf += len;
+      }
+#else
+      buffer = static_cast<unsigned char*>(m_cdr.bufPtr());
+      //m_cdr.getOctetStream(static_cast<CORBA::Octet*>(buffer));
+      //length = m_cdr.bufSize();
+      //m_cdr.getOctetStream(static_cast<CORBA::Octet*>(buffer), length, length);
+      //m_cdr = OpenRTMCdrStream();
+#endif
+    }
+
+    CORBA_CdrMemoryStream::CORBA_CdrMemoryStream(const CORBA_CdrMemoryStream & rhs)
+    {
+#ifdef ORB_IS_ORBEXPRESS
+      m_cdr.copy(rhs.m_cdr);
+#elif defined(ORB_IS_TAO)
+      for (const ACE_Message_Block* i = rhs.m_cdr.begin(); i != nullptr; i = i->cont())
+      {
+        m_cdr.write_octet_array_mb(i);
+      }
+#else
+      m_cdr = rhs.m_cdr;
+#endif
+    }
+
+    CORBA_CdrMemoryStream& CORBA_CdrMemoryStream::operator= (const CORBA_CdrMemoryStream& rhs)
+    {
+#ifdef ORB_IS_ORBEXPRESS
+      m_cdr.copy(rhs.m_cdr);
+      return *this;
+#elif defined(ORB_IS_TAO)
+      for (const ACE_Message_Block* i = rhs.m_cdr.begin(); i != nullptr; i = i->cont())
+      {
+        m_cdr.write_octet_array_mb(i);
+      }
+      return *this;
+#else
+      m_cdr = rhs.m_cdr;
+      return *this;
+#endif
+    }
 
 } // namespace RTC

@@ -75,9 +75,11 @@ namespace RTC
   {
     RTC_PARANOID(("put()"));
     CORBA::ULong len = static_cast<CORBA::ULong>(data.getDataLength());
-    m_data.length(len);
+    //m_data.length(len);
 #ifndef ORB_IS_RTORB
-    data.readData(static_cast<unsigned char*>(m_data.get_buffer()), len);
+    OpenRTM::CdrData out(len, len, data.getBuffer(), false);
+    //m_data = OpenRTM::CdrData(len, len, data.getBuffer(), false);
+    //data.readData(static_cast<unsigned char*>(m_data.get_buffer()), len);
 #else // ORB_IS_RTORB
     data.readData(reinterpret_cast<unsigned char*>(&m_data[0]), len);
 #endif  // ORB_IS_RTORB
@@ -85,7 +87,8 @@ namespace RTC
       {
         // return code conversion
         // (IDL)OpenRTM::DataPort::ReturnCode_t -> DataPortStatus
-        return convertReturnCode(_ptr()->put(m_data));
+        //return convertReturnCode(_ptr()->put(m_data));
+        return convertReturnCode(_ptr()->put(out));
       }
 #ifdef ORB_IS_OMNIORB
     catch (const CORBA::COMM_FAILURE& ex)

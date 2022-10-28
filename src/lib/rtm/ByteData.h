@@ -76,6 +76,7 @@ namespace RTC
          *
          * @endif
          */
+        ByteData(ByteData &rhs);
         ByteData(const ByteData &rhs);
         /*!
          * @if jp
@@ -93,7 +94,8 @@ namespace RTC
          *
          * @endif
          */
-        ByteData(const ByteDataStreamBase &rhs);
+        ByteData(ByteDataStreamBase &rhs);
+        ByteData(const ByteDataStreamBase& rhs);
         /*!
          * @if jp
          *
@@ -112,7 +114,8 @@ namespace RTC
          *
          * @endif
          */
-        ByteData& operator= (const ByteData &rhs);
+        ByteData& operator= (ByteData &rhs);
+        ByteData& operator= (const ByteData& rhs);
         /*!
          * @if jp
          *
@@ -131,7 +134,8 @@ namespace RTC
          *
          * @endif
          */
-        ByteData& operator= (const ByteDataStreamBase &rhs);
+        ByteData& operator= (ByteDataStreamBase &rhs);
+        ByteData& operator= (const ByteDataStreamBase& rhs);
         /*!
          * @if jp
          *
@@ -174,6 +178,48 @@ namespace RTC
          * @endif
          */
         void writeData(const unsigned char* data, unsigned long length);
+        /*!
+         * @if jp
+         *
+         * @brief 引数の変数にデータを格納
+         *
+         * @param data 書き込み先の変数
+         * @param length データの長さ
+         * @return
+         *
+         *
+         * @else
+         *
+         * @brief
+         *
+         * @param data
+         * @param length
+         * @return
+         *
+         * @endif
+         */
+        void copyFromData(unsigned char*& data, unsigned long length) const;
+        /*!
+         * @if jp
+         *
+         * @brief 内部の変数にデータを格納
+         *
+         * @param data 書き込み元の変数
+         * @param length データの長さ
+         * @return
+         *
+         *
+         * @else
+         *
+         * @brief
+         *
+         * @param data
+         * @param length
+         * @return
+         *
+         * @endif
+         */
+        void copyToData(unsigned char* data, unsigned long length);
         /*!
          * @if jp
          *
@@ -262,10 +308,16 @@ namespace RTC
          * @endif
          */
         bool getEndian();
+        void setExternalBuffer(const bool ext);
+        void copyFromData(ByteDataStreamBase& data);
+        void copyToData(ByteDataStreamBase& data);
+        void copyFromData(ByteDataStreamBase* data);
+        void copyToData(ByteDataStreamBase* data);
     private:
         unsigned char* m_buf{nullptr};
         unsigned long m_len{0};
         bool m_little_endian{true};
+        bool m_external_buffer{false};
     };
 
 } // namespace RTC
