@@ -594,7 +594,7 @@ namespace RTC
 
 
       //cdr->writeData(cdrdata.getBuffer(), cdrdata.getDataLength());
-      cdrdata.copyToData(cdr);
+      cdrdata.copyToAddress(cdr);
 
       cdr->deserialize(data);
 
@@ -1972,7 +1972,7 @@ namespace RTC
           }
 
           cdr->isLittleEndian(endian);
-          cdrdata.copyToData(cdr);
+          cdrdata.copyToAddress(cdr);
           //cdr->writeData(cdrdata.getBuffer(), cdrdata.getDataLength());
           cdr->deserialize(data);
 

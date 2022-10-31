@@ -308,6 +308,7 @@ namespace RTC
          *
          * @param buffer 書き込み元のバッファ
          * @param length バッファの長さ
+         * @return true：アドレスをコピー、false：データをコピー
          *
          *
          * @else
@@ -316,11 +317,12 @@ namespace RTC
          *
          * @param buffer
          * @param length
+         * @return 
          *
          *
          * @endif
          */
-        void copyToCdrData(unsigned char* buffer, unsigned long length);
+        bool copyToCdrData(unsigned char* buffer, unsigned long length);
 
         /*!
          * @if jp
@@ -350,6 +352,7 @@ namespace RTC
          *
          * @param buffer 書き込み先のバッファ
          * @param length バッファの長さ
+         * @return true：アドレスをコピー、false：データをコピー
          *
          *
          * @else
@@ -358,11 +361,27 @@ namespace RTC
          *
          * @param buffer
          * @param length
+         * @return 
          *
          *
          * @endif
          */
-        void copyFromCdrData(unsigned char*& buffer, unsigned long length);
+        bool copyFromCdrData(unsigned char*& buffer, unsigned long length);
+
+        /*!
+         * @if jp
+         * @brief データのアドレスのコピーを許可しているかを返す
+         *
+         * @return false：実装上の都合でアドレスのコピーを許可していない
+         *
+         * @else
+         * @brief
+         *
+         * @return 
+         *
+         * @endif
+         */
+        bool availableCopyFromAddress();
 
         /*!
          * @if jp
@@ -502,28 +521,30 @@ namespace RTC
 
         /*!
          * @if jp
-         * @brief 保持しているバッファにデータを書き込む
+         * @brief 保持しているバッファに引数のバッファのアドレスをコピーする
          *
          * @param buffer 書き込み元のバッファ
          * @param length データのサイズ
+         * @return true：アドレスをコピー、false：データをコピー
          *
          * @else
          * @brief
          *
          * @param buffer
          * @param length
+         * @return 
          *
          *
          * @endif
          */
-        void copyToData(unsigned char* buffer, unsigned long length) override
+        bool copyToAddress(unsigned char* buffer, unsigned long length) override
         {
-            m_cdr.copyToCdrData(buffer, length);
+            return m_cdr.copyToCdrData(buffer, length);
         }
 
         /*!
          * @if jp
-         * @brief 引数のバッファにデータを書き込む
+         * @brief 引数のバッファからデータを読み込む
          *
          * @param buffer 書き込み先のバッファ
          * @param length データのサイズ
@@ -544,23 +565,25 @@ namespace RTC
 
         /*!
          * @if jp
-         * @brief 引数のバッファにデータを書き込む
+         * @brief 引数のバッファのアドレスを保持しているバッファにコピーする
          *
          * @param buffer 書き込み先のバッファ
          * @param length データのサイズ
+         * @return true：アドレスをコピー、false：データをコピー
          *
          * @else
          * @brief
          *
          * @param buffer
          * @param length
+         * @return 
          *
          *
          * @endif
          */
-        void copyFromData(unsigned char*& buffer, unsigned long length) override
+        bool copyFromAddress(unsigned char*& buffer, unsigned long length) override
         {
-          m_cdr.copyFromCdrData(buffer, length);
+          return m_cdr.copyFromCdrData(buffer, length);
         }
 
         /*!
@@ -674,6 +697,24 @@ namespace RTC
         void isLittleEndian(bool little_endian) override
         {
             m_cdr.setEndian(little_endian);
+        }
+
+        /*!
+         * @if jp
+         * @brief データのアドレスのコピーを許可しているかを返す
+         *
+         * @return false：実装上の都合でアドレスのコピーを許可していない
+         *
+         * @else
+         * @brief
+         *
+         * @return 
+         *
+         * @endif
+         */
+        bool availableCopyFromAddress() override
+        {
+          return m_cdr.availableCopyFromAddress();
         }
     protected:
         CORBA_CdrMemoryStream m_cdr;

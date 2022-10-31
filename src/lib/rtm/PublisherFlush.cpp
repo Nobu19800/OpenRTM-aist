@@ -144,9 +144,8 @@ namespace RTC
         return m_retcode;
       }
 
-    m_data.copyFromData(data);
+    m_data.copyFromAddress(data);
     //m_data = *data;
-
     onSend(m_data);
     DataPortStatus ret(m_consumer->put(m_data));
     // consumer::put() returns

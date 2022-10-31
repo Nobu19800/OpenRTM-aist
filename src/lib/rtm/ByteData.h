@@ -198,7 +198,7 @@ namespace RTC
          *
          * @endif
          */
-        void copyFromData(unsigned char*& data, unsigned long length) const;
+        void copyFromAddress(unsigned char*& data, unsigned long length) const;
         /*!
          * @if jp
          *
@@ -219,7 +219,7 @@ namespace RTC
          *
          * @endif
          */
-        void copyToData(unsigned char* data, unsigned long length);
+        void copyToAddress(unsigned char* data, unsigned long length);
         /*!
          * @if jp
          *
@@ -309,10 +309,10 @@ namespace RTC
          */
         bool getEndian();
         void setExternalBuffer(const bool ext);
-        void copyFromData(ByteDataStreamBase& data);
-        void copyToData(ByteDataStreamBase& data);
-        void copyFromData(ByteDataStreamBase* data);
-        void copyToData(ByteDataStreamBase* data);
+        void copyFromAddress(ByteDataStreamBase& data);
+        void copyToAddress(ByteDataStreamBase& data);
+        void copyFromAddress(ByteDataStreamBase* data);
+        void copyToAddress(ByteDataStreamBase* data);
     private:
         unsigned char* m_buf{nullptr};
         unsigned long m_len{0};
