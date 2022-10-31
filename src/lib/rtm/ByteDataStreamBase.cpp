@@ -92,5 +92,70 @@ namespace RTC
 
     }
 
+    /*!
+     * @if jp
+     * @brief 保持しているバッファに引数のバッファのアドレスをコピーする
+     *
+     * @param buffer 書き込み先のバッファ
+     * @param length データのサイズ
+     * @return true：アドレスをコピー、false：データをコピー
+     *
+     * @else
+     * @brief
+     *
+     * @param buffer
+     * @param length
+     * @return 
+     *
+     *
+     * @endif
+     */
+    bool ByteDataStreamBase::copyToAddress(unsigned char* buffer, unsigned long length)
+    {
+      writeData(buffer, length);
+      return false;
+    }
+
+    /*!
+     * @if jp
+     * @brief 引数のバッファのアドレスを保持しているバッファにコピーする
+     *
+     * @param buffer 書き込み元のバッファ
+     * @param length データのサイズ
+     * @return true：アドレスをコピー、false：データをコピー
+     *
+     * @else
+     * @brief
+     *
+     * @param buffer
+     * @param length
+     * @return 
+     *
+     *
+     * @endif
+     */
+    bool ByteDataStreamBase::copyFromAddress(unsigned char*& buffer, unsigned long length)
+    {
+      readData(buffer, length);
+      return false;
+    }
+
+    /*!
+     * @if jp
+     * @brief データのアドレスのコピーを許可しているかを返す
+     *
+     * @return false：実装上の都合でアドレスのコピーを許可していない
+     *
+     * @else
+     * @brief
+     *
+     * @return 
+     *
+     * @endif
+     */
+    bool ByteDataStreamBase::availableCopyFromAddress()
+    {
+      return false;
+    }
 
 } // namespace RTC

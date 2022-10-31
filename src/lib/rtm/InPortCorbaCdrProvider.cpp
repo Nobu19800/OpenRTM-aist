@@ -170,7 +170,7 @@ namespace RTC
     m_cdr.isLittleEndian(endian_type);
 #ifndef ORB_IS_RTORB
     //m_cdr.writeData(const_cast<unsigned char*>(data.get_buffer()), static_cast<CORBA::ULong>(data.length()));
-    m_cdr.copyToData(const_cast<unsigned char*>(data.get_buffer()), static_cast<CORBA::ULong>(data.length()));
+    m_cdr.copyToAddress(const_cast<unsigned char*>(data.get_buffer()), static_cast<CORBA::ULong>(data.length()));
 #else
     m_cdr.writeData(reinterpret_cast<unsigned char*>(&data[0]), static_cast<CORBA::ULong>(data.length()));
 #endif

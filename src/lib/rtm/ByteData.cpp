@@ -96,7 +96,7 @@ namespace RTC
     ByteData::ByteData(ByteDataStreamBase &rhs)
     {
       m_len = rhs.getDataLength();
-      rhs.copyFromData(m_buf, m_len);
+      rhs.copyFromAddress(m_buf, m_len);
     }
     ByteData::ByteData(const ByteDataStreamBase& rhs)
     {
@@ -177,7 +177,7 @@ namespace RTC
       }
       
       m_len = rhs.getDataLength();
-      rhs.copyFromData(m_buf, m_len);
+      rhs.copyFromAddress(m_buf, m_len);
       m_external_buffer = true;
  
       return *this;
@@ -328,7 +328,7 @@ namespace RTC
      *
      * @endif
      */
-    void ByteData::copyFromData(unsigned char*& data, unsigned long /*length*/) const
+    void ByteData::copyFromAddress(unsigned char*& data, unsigned long /*length*/) const
     {
       data = m_buf;
     }
@@ -353,7 +353,7 @@ namespace RTC
      *
      * @endif
      */
-    void ByteData::copyToData(unsigned char* data, unsigned long length)
+    void ByteData::copyToAddress(unsigned char* data, unsigned long length)
     {
       m_len = length;
       m_buf = data;
@@ -437,29 +437,55 @@ namespace RTC
       m_external_buffer = ext;
     }
 
-    void ByteData::copyFromData(ByteDataStreamBase& data)
+    void ByteData::copyFromAddress(ByteDataStreamBase& data)
     {
-      m_len = data.getDataLength();
-      data.copyFromData(m_buf, m_len);
-      m_external_buffer = true;
+      if (data.availableCopyFromAddress())
+      {
+        m_len = data.getDataLength();
+        data.copyFromAddress(m_buf, m_len);
+        m_external_buffer = true;
+      }
+      else
+      {
+        if (!m_external_buffer)
+        {
+          delete[] m_buf;
+          m_buf = nullptr;
+        }
+        m_buf = new unsigned char[m_len];
+        data.readData(m_buf, m_len);
+      }
     }
 
-    void ByteData::copyToData(ByteDataStreamBase& data)
+    void ByteData::copyToAddress(ByteDataStreamBase& data)
     {
-      data.copyToData(m_buf, m_len);
+      data.copyToAddress(m_buf, m_len);
       //m_external_buffer = true;
     }
 
-    void ByteData::copyFromData(ByteDataStreamBase* data)
+    void ByteData::copyFromAddress(ByteDataStreamBase* data)
     {
       m_len = data->getDataLength();
-      data->copyFromData(m_buf, m_len);
-      m_external_buffer = true;
+      if (data->availableCopyFromAddress())
+      {
+        data->copyFromAddress(m_buf, m_len);
+        m_external_buffer = true;
+      }
+      else
+      {
+        if (!m_external_buffer)
+        {
+          delete[] m_buf;
+          m_buf = nullptr;
+        }
+        m_buf = new unsigned char[m_len];
+        data->readData(m_buf, m_len);
+      }
     }
 
-    void ByteData::copyToData(ByteDataStreamBase* data)
+    void ByteData::copyToAddress(ByteDataStreamBase* data)
     {
-      data->copyToData(m_buf, m_len);
+      data->copyToAddress(m_buf, m_len);
       //m_external_buffer = true;
     }
 

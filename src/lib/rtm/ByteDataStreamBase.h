@@ -128,10 +128,12 @@ namespace RTC
      virtual void writeData(const unsigned char *buffer, unsigned long length) = 0;
      /*!
       * @if jp
-      * @brief 保持しているバッファにデータを書き込む
+      * @brief 保持しているバッファに引数のバッファのアドレスをコピーする
+      * 実装上の理由でアドレスのコピーを許可していない場合、データをコピーしてfalseを返す
       *
-      * @param buffer 書き込み元のバッファ
+      * @param buffer 書き込み先のバッファ
       * @param length データのサイズ
+      * @return true：アドレスをコピー、false：データをコピー
       *
       * @else
       * @brief
@@ -142,10 +144,10 @@ namespace RTC
       *
       * @endif
       */
-     virtual void copyToData(unsigned char* /*buffer*/, unsigned long /*length*/) {};
+     virtual bool copyToAddress(unsigned char* buffer, unsigned long length);
      /*!
       * @if jp
-      * @brief 引数のバッファにデータを書き込む
+      * @brief 引数のバッファからデータを読み込む
       *
       * @param buffer 書き込み先のバッファ
       * @param length データのサイズ
@@ -162,10 +164,12 @@ namespace RTC
      virtual void readData(unsigned char *buffer, unsigned long length) const = 0;
      /*!
       * @if jp
-      * @brief 引数のバッファにデータを書き込む
+      * @brief 引数のバッファのアドレスを保持しているバッファにコピーする
+      * 実装上の理由でアドレスのコピーを許可していない場合、データをコピーしてfalseを返す
       *
-      * @param buffer 書き込み先のバッファ
+      * @param buffer 読み込み元のバッファ
       * @param length データのサイズ
+      * @return true：アドレスをコピー、false：データをコピー
       *
       * @else
       * @brief
@@ -176,7 +180,7 @@ namespace RTC
       *
       * @endif
       */
-     virtual void copyFromData(unsigned char*& /*buffer*/, unsigned long /*length*/) {};
+     virtual bool copyFromAddress(unsigned char*& buffer, unsigned long length);
      /*!
       * @if jp
       * @brief データの長さを取得
@@ -205,6 +209,20 @@ namespace RTC
       * @endif
       */
      virtual void isLittleEndian(bool little_endian);
+     /*!
+      * @if jp
+      * @brief データのアドレスのコピーを許可しているかを返す
+      *
+      * @return false：実装上の都合でアドレスのコピーを許可していない
+      *
+      * @else
+      * @brief
+      *
+      * @return 
+      *
+      * @endif
+      */
+     virtual bool availableCopyFromAddress();
   };
 
   /*!
