@@ -1458,6 +1458,11 @@ std::vector<coil::Properties> Manager::getLoadableModules()
       {
         m_logfiles.clear();
       }
+    std::vector<LogstreamBase*> objects = LogstreamFactory::instance().createdObjects();
+    for (auto& object : objects)
+    {
+      LogstreamFactory::instance().deleteObject(object);
+    }
   }
 
   /*!
