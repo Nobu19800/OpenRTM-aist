@@ -1449,11 +1449,6 @@ std::vector<coil::Properties> Manager::getLoadableModules()
     RTC_TRACE(("Manager::shutdownLogger()"));
     rtclog.flush();
 
-    for (auto & m_logfile : m_logfiles)
-      {
-        m_logfile->close();
-        delete m_logfile;
-      }
     if (!m_logfiles.empty())
       {
         m_logfiles.clear();
