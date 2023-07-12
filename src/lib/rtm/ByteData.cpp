@@ -21,7 +21,6 @@ namespace RTC
      */
     ByteData::ByteData()
     {
-
     }
 
     /*!
@@ -97,6 +96,7 @@ namespace RTC
     {
       m_len = rhs.getDataLength();
       rhs.copyFromAddress(m_buf, m_len);
+      m_external_buffer = true;
     }
     ByteData::ByteData(const ByteDataStreamBase& rhs)
     {
@@ -147,7 +147,12 @@ namespace RTC
         }
         m_buf = new unsigned char[m_len];
       }
+      else if (m_external_buffer)
+      {
+        m_buf = new unsigned char[m_len];
+      }
       memcpy(m_buf, rhs.m_buf, m_len);
+      m_external_buffer = false;
       return *this;
     }
     /*!
@@ -194,7 +199,12 @@ namespace RTC
         }
         m_buf = new unsigned char[m_len];
       }
+      else if (m_external_buffer)
+      {
+        m_buf = new unsigned char[m_len];
+      }
       rhs.readData(m_buf, m_len);
+      m_external_buffer = false;
       return *this;
     }
     /*!
@@ -304,6 +314,10 @@ namespace RTC
             delete[] m_buf;
           }
           m_len = length;
+          m_buf = new unsigned char[length];
+        }
+        else if (m_external_buffer)
+        {
           m_buf = new unsigned char[length];
         }
         memcpy(m_buf, data, length);
