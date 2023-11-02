@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.5.1)
 
 project (OpenRTM_aist
-	VERSION 2.0.0
+	VERSION 2.0.1
 	LANGUAGES CXX)
 
 set(CORBA omniORB CACHE STRING "set CORBA ")
@@ -697,7 +697,7 @@ function(openrtm_common_set_compile_options target)
 		-Wstrict-null-sentinel
 		-Wstrict-overflow=5
 		$<$<VERSION_GREATER:${CMAKE_CXX_COMPILER_VERSION},6.9.9>: -Wstringop-overflow=4>
-		$<$<VERSION_GREATER:${CMAKE_CXX_COMPILER_VERSION},9.9.9>: -Wsuggest-attribute=cold>
+		$<$<VERSION_GREATER:${CMAKE_CXX_COMPILER_VERSION},11.9.9>: -Wsuggest-attribute=cold>
 		-Wsuggest-attribute=format
 		$<$<VERSION_GREATER:${CMAKE_CXX_COMPILER_VERSION},7.9.9>: -Wsuggest-attribute=malloc>
 		$<$<VERSION_GREATER:${CMAKE_CXX_COMPILER_VERSION},4.9.9>: -Wsuggest-override>
@@ -846,7 +846,7 @@ function(openrtm_gencode_set_compile_props target)
 endfunction()
 
 function(openrtm_idl_compile idl_name inc_path output category dependencies)
-	set(skel_wrapper ${OpenRTM_aist_BINARY_DIR}/rtm-skelwrapper2)
+	set(skel_wrapper ${OpenRTM_aist_BINARY_DIR}/rtm2-skelwrapper)
 	if(CORBA STREQUAL "ORBexpress")
 		set(idl_flags -m -a -ex -fhh -fxcc -fc_c -fs -q -dOE_IDL -I${ORB_ROOT}/idl)
 	elseif (CORBA STREQUAL "omniORB")
@@ -960,6 +960,40 @@ if(WIN32)
 	set(MAKE_DEF_COMMAND ${CMAKE_SOURCE_DIR}/scripts/makedeffile.py)
 endif(WIN32)
 
+if(UNIX)
+  if(ROS_ENABLE OR ROS2_ENABLE)
+    set(INSTALL_ROS2TRANSPORT_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/ros2transport-${RTM_MAJOR_VERSION}.${RTM_MINOR_VERSION}/cmake)
+    if(ROS_ENABLE)
+      set(INSTALL_ROSTRANSPORT_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/rostransport-${RTM_MAJOR_VERSION}.${RTM_MINOR_VERSION}/cmake)
+      configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/rules.in
+	 ${PROJECT_BINARY_DIR}/rules @ONLY
+      )
+    else()
+      configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/rules.ros2-only-support.in
+	 ${PROJECT_BINARY_DIR}/rules @ONLY
+      )
+    endif()
+    file(STRINGS "/etc/os-release" data_list REGEX "^(VERSION_CODENAME)=")
+
+    # Look for lines like VERSION_CODENAME="..."
+    foreach(var ${data_list})
+      if("${var}" MATCHES "^(VERSION_CODENAME)=(.*)$")
+        set(ubuntu_codename "${CMAKE_MATCH_2}")
+        configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/control.${ubuntu_codename}
+             ${PROJECT_BINARY_DIR}/control @ONLY
+        )
+      endif()
+    endforeach()
+  else()
+    configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/rules.not-ros-support.in
+	 ${PROJECT_BINARY_DIR}/rules @ONLY
+    )
+    configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/control.not-ros-support
+         ${PROJECT_BINARY_DIR}/control @ONLY
+    )
+  endif()
+endif(UNIX)
+
 add_subdirectory(src)
 
 set(UTILS_ENABLE TRUE CACHE BOOL "set UTILS_ENABLE ")
@@ -1006,26 +1040,3 @@ endfunction(get_dist)
 get_dist(DIST_NAME)
 message(STATUS "Distribution is ${DIST_NAME}")
 
-if(UNIX)
-    configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/rules.in
-	 ${PROJECT_BINARY_DIR}/rules @ONLY
-    )
-
-  if(${DIST_NAME} MATCHES "Ubuntu")
-    file(STRINGS "/etc/os-release" data_list REGEX "^(VERSION_CODENAME)=")
-
-    # Look for lines like VERSION_CODENAME="..."
-    foreach(var ${data_list})
-      if("${var}" MATCHES "^(VERSION_CODENAME)=(.*)$")
-        set(ubuntu_codename "${CMAKE_MATCH_2}")
-        configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/control.${ubuntu_codename}
-             ${PROJECT_BINARY_DIR}/control @ONLY
-        )
-      endif()
-    endforeach()
-  else()
-    configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/control.not-ros-support
-         ${PROJECT_BINARY_DIR}/control @ONLY
-    )
-  endif()
-endif(UNIX)

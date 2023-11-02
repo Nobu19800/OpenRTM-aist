@@ -91,7 +91,7 @@ else()
 endif()
 
 
-install(FILES OpenSpliceMessageInfo.h DESTINATION ${INSTALL_RTM_INCLUDE_DIR}/rtm/ext COMPONENT ext)
+install(FILES OpenSpliceMessageInfo.h DESTINATION ${INSTALL_RTM_INCLUDE_DIR}/rtm/ext/OpenSplice COMPONENT ext)
 
 
 

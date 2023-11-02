@@ -14,13 +14,17 @@
 # = OPT_UNINST   : uninstallation
 #
 
-VERSION=2.0.0.00
+VERSION=2.0.1.03
 FILENAME=openrtm2_install_ubuntu.sh
 
 #
 #---------------------------------------
 # usage
 #---------------------------------------
+op_r_msg="install only runtime libraries and environment for RTC"
+op_d_msg="install packages for RTC developer"
+op_s_msg="install tool_packages for building OpenRTM from source"
+op_c_msg="install tool_packages for OpenRTM core developer"
 usage()
 {
   cat <<EOF
@@ -45,13 +49,13 @@ usage()
     -l <argument>  language or tool [c++|python|java|openrtp|rtshell|all]
 	all        install packages of all the supported languages and tools
                    (openrtp is not supported in aarch64 environment.)
-    -r             install robot component runtime
-    -d             install robot component developer [default]
+    -r             ${op_r_msg}
+    -d             ${op_d_msg} [default]
     -e <argument>  install extension packages [ros|ros2|all]
     --ros          install extension package for ROS
     --ros2         install extension package for ROS2
-    -s             install tool_packages for build source packages
-    -c             install tool_packages for core developer
+    -s             ${op_s_msg}
+    -c             ${op_c_msg}
     -u             uninstall packages
     --yes          force yes
     --help, -h     print this
@@ -98,7 +102,7 @@ openrtm2_ros2="openrtm2-ros2-tp"
 
 #--------------------------------------- Python
 omnipy="omniidl-python3"
-python_runtime="python3 python3-omniorb-omg"
+python_runtime="python3 python3-omniorb-omg python3-tk tix-dev"
 python_devel="python3-pip $cmake_tools $base_tools $omnipy $common_devel"
 openrtm2_py_devel="openrtm2-python3-doc"
 openrtm2_py_runtime="openrtm2-python3 openrtm2-python3-example"
@@ -133,12 +137,13 @@ arg_java=false
 arg_openrtp=false
 arg_rtshell=false
 err_message=""
+select_opt_c=""
 }
 
 
 check_arg()
 {
-  local arg=$1
+  local arg=$1 tmp
   arg_err=0
   
   case "$arg" in
@@ -146,15 +151,18 @@ check_arg()
     c++ ) arg_cxx=true ;;
     python ) arg_python=true ;;
     java ) arg_java=true ;;
-    openrtp ) arg_openrtp=true ;;
+    openrtp ) arg_openrtp=true
+              if test "x${ARCH}" = "xaarch64"; then
+                arg_openrtp=false
+                msg="[WARNING] openrtp is not supported in aarch64 environment."
+                echo $msg
+                tmp="$err_message$LF$msg"
+                err_message=$tmp
+              fi
+	      shift ;;
     rtshell ) arg_rtshell=true ;;
     *) arg_err=-1 ;;
   esac
-
-  if test "x${ARCH}" = "xaarch64"; then
-    arg_openrtp=false
-    echo "[wARNING] openrtp is not supported in aarch64 environment."
-  fi
 }
 
 check_ros_arg()
@@ -163,7 +171,14 @@ check_ros_arg()
   arg_err=0
 
   case "$arg" in
-    all ) OPT_ROS=true ; OPT_ROS2=true ;;
+    all ) OPT_ROS2=true
+          res=`grep 18.04 /etc/lsb-release`
+          res1=`grep 20.04 /etc/lsb-release`
+          if test ! "x$res" = "x" ||
+             test ! "x$res1" = "x" ; then
+            OPT_ROS=true
+          fi
+          shift ;;
     ros ) OPT_ROS=true ;;
     ros2 ) OPT_ROS2=true ;;
     *) arg_err=-1 ;;
@@ -401,16 +416,18 @@ create_srclist () {
     echo $msg3
     exit
   fi
-  openrtm_repo="deb http://$reposerver/pub/Linux/ubuntu/ $code_name main"
-  fluent_repo="deb https://packages.fluentbit.io/ubuntu/$code_name $code_name main"
+  openrtm_repo="deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/openrtm.key] http://$reposerver/pub/Linux/ubuntu/ $code_name main"
+  fluent_repo="deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/fluentbit-keyring.gpg] https://packages.fluentbit.io/ubuntu/$code_name $code_name main"
 }
 
 #---------------------------------------
 # ソースリスト更新関数の定義
 #---------------------------------------
 update_source_list () {
-  rtmsite=`grep $reposerver /etc/apt/sources.list`
-  if test "x$rtmsite" = "x" ; then
+  rtmsite1=`grep $reposerver /etc/apt/sources.list`
+  rtmsite2=`grep -r $reposerver /etc/apt/sources.list.d`
+  if test "x$rtmsite1" = "x" &&
+     test "x$rtmsite2" = "x" ; then
     echo $msg4
     echo $msg5
     echo "  " $openrtm_repo
@@ -420,18 +437,21 @@ update_source_list () {
       echo $msg7
       exit 0
     else
-      echo $openrtm_repo | sudo tee -a /etc/apt/sources.list
+      echo $openrtm_repo | sudo tee /etc/apt/sources.list.d/openrtm.list > /dev/null
+      if [ ! -d /etc/apt/keyrings ]; then
+        sudo mkdir -p /etc/apt/keyrings
+      fi
+      sudo wget --secure-protocol=TLSv1_2 --no-check-certificate https://openrtm.org/pub/openrtm.key -O /etc/apt/keyrings/openrtm.key
     fi
+  elif test "x$rtmsite2" != "x" &&
+       [ ! -e /etc/apt/keyrings/openrtm.key ]; then
+    sudo wget --secure-protocol=TLSv1_2 --no-check-certificate https://openrtm.org/pub/openrtm.key -O /etc/apt/keyrings/openrtm.key
   fi
   fluentsite=`apt-cache policy | grep "https://packages.fluentbit.io"`
   if test "x$fluentsite" = "x" &&
      test "x$OPT_COREDEVEL" = "xtrue" ; then
-    echo $fluent_repo | sudo tee -a /etc/apt/sources.list
-  fi
-  # 公開鍵登録
-  wget -O- --secure-protocol=TLSv1_2 --no-check-certificate https://openrtm.org/pub/openrtm.key | sudo apt-key add -
-  if test "x$OPT_COREDEVEL" = "xtrue" ; then
-    wget -O - https://packages.fluentbit.io/fluentbit.key | sudo apt-key add -
+    echo $fluent_repo | sudo tee /etc/apt/sources.list.d/fluentbit.list > /dev/null
+    wget -O - https://packages.fluentbit.io/fluentbit.key | gpg --dearmor | sudo tee /usr/share/keyrings/fluentbit-keyring.gpg >/dev/null
   fi
 }
 
@@ -580,19 +600,21 @@ u_java_core_pkgs="$omni_runtime"
 #---------------------------------------
 install_proc()
 {
+  local msg tmp
+
   if test "x$arg_cxx" = "xtrue" ; then
     if test "x$OPT_COREDEVEL" = "xtrue" ; then
-      select_opt_c="[c++] install tool_packages for core developer"
+      select_opt_c="[c++] ${op_c_msg}"
       install_packages $core_pkgs
     elif test "x$OPT_SRCPKG" = "xtrue" ; then
-      select_opt_c="[c++] install tool_packages for source packages"
+      select_opt_c="[c++] ${op_s_msg}"
       install_packages $src_pkgs
     elif test "x$OPT_RUNTIME" = "xtrue" ; then
-      select_opt_c="[c++] install robot component runtime"
+      select_opt_c="[c++] ${op_r_msg}"
       install_packages $runtime_pkgs
     else
       OPT_DEVEL=true
-      select_opt_c="[c++] install robot component developer"
+      select_opt_c="[c++] ${op_d_msg}"
       install_packages $dev_pkgs
     fi
     if test "x$OPT_ROS" = "xtrue" ; then
@@ -603,7 +625,7 @@ install_proc()
     fi
     if test "x$OPT_ROS2" = "xtrue" ; then
       if test "x$OPT_DEVEL" = "xtrue" || test "x$OPT_RUNTIME" = "xtrue" ; then
-        select_opt_c="$select_opt_c\n[c++] install ROS2 expansion packagee"
+        select_opt_c="$select_opt_c\n[c++] install ROS2 expansion package"
         install_packages $ros2_pkg
       fi
     fi
@@ -611,29 +633,29 @@ install_proc()
 
   if test "x$arg_python" = "xtrue" ; then
     if test "x$OPT_COREDEVEL" = "xtrue" ; then
-      select_opt_p="[python] install tool_packages for core developer"
+      select_opt_p="[python] ${op_c_msg}"
       install_packages $python_core_pkgs
       pip3 install fluent-logger
       tmp_pkg="$install_pkgs fluent-logger"
       install_pkgs=$tmp_pkg
     elif test "x$OPT_RUNTIME" = "xtrue" ; then
-      select_opt_p="[python] install robot component runtime"
+      select_opt_p="[python] ${op_r_msg}"
       install_packages $python_runtime_pkgs
     else
-      select_opt_p="[python] install robot component developer"
+      select_opt_p="[python] ${op_d_msg}"
       install_packages $python_dev_pkgs
     fi
   fi
 
   if test "x$arg_java" = "xtrue" ; then
     if test "x$OPT_COREDEVEL" = "xtrue" ; then
-      select_opt_j="[java] install tool_packages for core developer"
+      select_opt_j="[java] ${op_c_msg}"
       install_packages $java_core_pkgs
     elif test "x$OPT_RUNTIME" = "xtrue" ; then
-      select_opt_j="[java] install robot component runtime"
+      select_opt_j="[java] ${op_r_msg}"
       install_packages $java_runtime_pkgs
     else
-      select_opt_j="[java] install robot component developer"
+      select_opt_j="[java] ${op_d_msg}"
       install_packages $java_dev_pkgs
     fi
   fi
@@ -646,8 +668,14 @@ install_proc()
   if test "x$arg_rtshell" = "xtrue" ; then
     select_opt_shl="[rtshell] install"
     install_packages python3-pip
-    rtshell_ret=`sudo pip3 install rtshell-aist`
-    sudo rtshell_post_install -n
+    rtshell_ret=`sudo python3 -m pip install rtshell-aist`
+    if test "x$rtshell_ret" != "x"; then
+      sudo rtshell_post_install -n
+    else
+      msg="\n[ERROR] Failed to install rtshell-aist."
+      tmp="$err_message$msg"
+      err_message=$tmp
+    fi
   fi
 }
 
@@ -656,19 +684,21 @@ install_proc()
 #---------------------------------------
 uninstall_proc()
 {
+  local msg tmp
+
   if test "x$arg_cxx" = "xtrue" ; then
     if test "x$OPT_COREDEVEL" = "xtrue" ; then
-      select_opt_c="[c++] uninstall tool_packages for core developer"
+      select_opt_c="[c++] un${op_c_msg}"
       uninstall_packages `reverse $u_core_pkgs`
     elif test "x$OPT_SRCPKG" = "xtrue" ; then
-      select_opt_c="[c++] uninstall tool_packages for source packages"
+      select_opt_c="[c++] un${op_s_msg}"
       uninstall_packages `reverse $u_src_pkgs`
     elif test "x$OPT_RUNTIME" = "xtrue" ; then
-      select_opt_c="[c++] uninstall robot component runtime"
+      select_opt_c="[c++] un${op_r_msg}"
       uninstall_packages `reverse $u_runtime_pkgs`
     else
       OPT_DEVEL=true
-      select_opt_c="[c++] uninstall robot component developer"
+      select_opt_c="[c++] un${op_d_msg}"
       uninstall_packages `reverse $u_dev_pkgs`
     fi
     if test "x$OPT_ROS" = "xtrue" ; then
@@ -687,26 +717,26 @@ uninstall_proc()
 
   if test "x$arg_python" = "xtrue" ; then
     if test "x$OPT_COREDEVEL" = "xtrue" ; then
-      select_opt_p="[python] uninstall tool_packages for core developer"
+      select_opt_p="[python] un${op_c_msg}"
       uninstall_packages `reverse $u_python_core_pkgs`
     elif test "x$OPT_RUNTIME" = "xtrue" ; then
-      select_opt_p="[python] uninstall robot component runtime"
+      select_opt_p="[python] un${op_r_msg}"
       uninstall_packages `reverse $u_python_runtime_pkgs`
     else
-      select_opt_p="[python] uninstall robot component developer"
+      select_opt_p="[python] un${op_d_msg}"
       uninstall_packages `reverse $u_python_dev_pkgs`
     fi
   fi
 
   if test "x$arg_java" = "xtrue" ; then
     if test "x$OPT_COREDEVEL" = "xtrue" ; then
-      select_opt_j="[java] uninstall tool_packages for core developer"
+      select_opt_j="[java] un${op_c_msg}"
       uninstall_packages `reverse $u_java_core_pkgs`
     elif test "x$OPT_RUNTIME" = "xtrue" ; then
-      select_opt_j="[java] uninstall robot component runtime"
+      select_opt_j="[java] un${op_r_msg}"
       uninstall_packages `reverse $u_java_runtime_pkgs`
     else
-      select_opt_j="[java] uninstall robot component developer"
+      select_opt_j="[java] un${op_d_msg}"
       uninstall_packages `reverse $u_java_dev_pkgs`
     fi
   fi
@@ -718,7 +748,12 @@ uninstall_proc()
 
   if test "x$arg_rtshell" = "xtrue" ; then
     select_opt_shl="[rtshell] uninstall"
-    rtshell_ret=`sudo pip3 uninstall -y rtshell-aist rtctree-aist rtsprofile-aist`
+    rtshell_ret=`sudo python3 -m pip uninstall -y rtshell-aist rtctree-aist rtsprofile-aist`
+    if test "x$rtshell_ret" = "x"; then
+      msg="\n[ERROR] Failed to uninstall rtshell-aist."
+      tmp="$err_message$msg"
+      err_message=$tmp
+    fi
   fi
 }
 
@@ -730,7 +765,7 @@ print_option()
   cat <<EOF
 
 =============================================
- Selected options is ...
+ Selected options are ...
 =============================================
 EOF
 
@@ -760,11 +795,11 @@ install_result()
   cat <<EOF
 
 =============================================
- Install package is ...
+ Installed packages are ...
 =============================================
 EOF
   if [ $# -eq 0 ] && test "x$OPT_UNINST" = "xfalse"; then
-    echo "There is no installation package."
+    echo "There is no installed package."
     return
   fi
 
@@ -786,12 +821,12 @@ uninstall_result()
   cat <<EOF
 
 =============================================
- Uninstall package is ...
+ Uninstalled packages are ...
 =============================================
 EOF
   if [ $# -eq 0 ] && test "x$OPT_UNINST" = "xtrue"; then
     if test "x$uninstall_pkgs" = "x"; then
-      echo "There is no uninstall package."
+      echo "There is no uninstalled package."
       return
     fi
   fi
@@ -841,7 +876,9 @@ if test "x$arg_all" = "xtrue" &&
   arg_java=true
   if test "x${ARCH}" = "xaarch64"; then
     arg_openrtp=false
-    echo "[WARNING] openrtp is not supported in aarch64 environment."
+    msg="[WARNING] openrtp is not supported in aarch64 environment."
+    tmp="$err_message$LF$msg"
+    err_message=$tmp
   else
     arg_openrtp=true
   fi
@@ -865,12 +902,6 @@ else
   uninstall_proc
 fi
 
-install_result $install_pkgs
-uninstall_result $uninstall_pkgs
-if test ! "x$err_message" = "x" ; then
-  echo $err_message
-fi
-
 # install openjdk-8-jdk
 if test "x$OPT_UNINST" = "xtrue" ; then
   sudo apt -y install openjdk-8-jdk
@@ -879,8 +910,16 @@ if test "x$OPT_UNINST" = "xtrue" ; then
 fi
 
 if test "x$OPT_COREDEVEL" = "xtrue" ; then
-  systemctl enable td-agent-bit
-  systemctl start td-agent-bit
+  sudo systemctl enable td-agent-bit
+  sudo systemctl start td-agent-bit
+fi
+
+install_result $install_pkgs
+uninstall_result $uninstall_pkgs
+if test ! "x$err_message" = "x" ; then
+  ESC=$(printf '\033')
+  echo $LF
+  echo "${ESC}[33m${err_message}${ESC}[m"
 fi
 
 ESC=$(printf '\033')
@@ -890,6 +929,7 @@ if test "x$OPT_UNINST" = "xtrue" &&
   msg1='To use the log collection extension using the Fluentd logger,'
   msg2='please install Fluent Bit by following the steps on the following web page.'
   msg3='https://docs.fluentbit.io/manual/installation/linux/ubuntu'
+  echo $LF
   echo "${ESC}[33m${msg1}${ESC}[m"
   echo "${ESC}[33m${msg2}${ESC}[m"
   echo "${ESC}[33m${msg3}${ESC}[m"
@@ -897,6 +937,7 @@ fi
 if test "x$OPT_UNINST" = "xfalse" ; then
   msg1='omniorb or other OpenRTM dependent packages may still exist. '
   msg2='If you want to remove them, please do “apt autoremove” later.'
+  echo $LF
   echo "${ESC}[33m${msg1}${ESC}[m"
   echo "${ESC}[33m${msg2}${ESC}[m"
 fi

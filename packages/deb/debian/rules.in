@@ -19,6 +19,8 @@ export DH_OPTIONS
 INSTALL_PREFIX = @CMAKE_INSTALL_PREFIX@
 RTM_LIB_DIR=@INSTALL_RTM_LIB_DIR@
 RTM_EXT_DIR=@INSTALL_RTM_EXT_DIR@
+ROS2TRANSPORT_CMAKE_DIR=@INSTALL_ROS2TRANSPORT_CMAKE_DIR@
+ROSTRANSPORT_CMAKE_DIR=@INSTALL_ROSTRANSPORT_CMAKE_DIR@
 
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
@@ -93,8 +95,8 @@ install-indep:
 install-arch:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -s 
-	dh_installdirs -s
+	dh_clean -k -a
+	dh_installdirs -a
 
 	# Add here commands to install the arch part of the package into 
 	# debian/tmp.
@@ -103,7 +105,7 @@ install-arch:
 	(mkdir -p $(TARGET)/bin)
 	(cp $(INSTALL_PREFIX)/bin/rtcd2 $(TARGET)/bin)
 	(cp $(INSTALL_PREFIX)/bin/rtcprof2 $(TARGET)/bin)
-	(cp $(INSTALL_PREFIX)/bin/rtm-config2 $(TARGET)/bin)
+	(cp $(INSTALL_PREFIX)/bin/rtm2-config $(TARGET)/bin)
 	(cp $(INSTALL_PREFIX)/bin/rtm2-naming $(TARGET)/bin)
 	(cp -r $(INSTALL_PREFIX)/etc $(TARGET))
 	(mkdir -p $(TARGET)/${RTM_EXT_DIR})
@@ -119,15 +121,19 @@ install-arch:
 	# for openrtm-aist-ros package
 	(mkdir -p $(TARGET_ros)/${RTM_EXT_DIR}/transport)
 	(cp -r $(INSTALL_PREFIX)/${RTM_EXT_DIR}/transport/ROSTransport.so $(TARGET_ros)/${RTM_EXT_DIR}/transport)
+	(mkdir -p $(TARGET_ros)/${ROSTRANSPORT_CMAKE_DIR})
+	(cp -r $(INSTALL_PREFIX)/${ROSTRANSPORT_CMAKE_DIR}/* $(TARGET_ros)/${ROSTRANSPORT_CMAKE_DIR})
 
 	# for openrtm-aist-ros2 package
 	(mkdir -p $(TARGET_ros2)/${RTM_EXT_DIR}/transport)
 	(cp -r $(INSTALL_PREFIX)/${RTM_EXT_DIR}/transport/ROS2*.so $(TARGET_ros2)/${RTM_EXT_DIR}/transport)
 	(cp -r $(INSTALL_PREFIX)/${RTM_EXT_DIR}/transport/Fast*.so $(TARGET_ros2)/${RTM_EXT_DIR}/transport)
+	(mkdir -p $(TARGET_ros2)/${ROS2TRANSPORT_CMAKE_DIR})
+	(cp -r $(INSTALL_PREFIX)/${ROS2TRANSPORT_CMAKE_DIR}/* $(TARGET_ros2)/${ROS2TRANSPORT_CMAKE_DIR})
 
 	# for openrtm-dev package
 	(mkdir -p $(TARGET_dev)/bin)
-	(cp $(INSTALL_PREFIX)/bin/rtm-skelwrapper2 $(TARGET_dev)/bin)
+	(cp $(INSTALL_PREFIX)/bin/rtm2-skelwrapper $(TARGET_dev)/bin)
 	(cp -r $(INSTALL_PREFIX)/include $(TARGET_dev))
 	(rm -r $(TARGET_dev)/include/openrtm-$(SHORT_VER)/hrtm)
 	(mkdir -p $(TARGET_dev)/${RTM_EXT_DIR})
@@ -146,7 +152,7 @@ install-arch:
 	(mkdir -p $(TARGET_example)/share/openrtm-$(SHORT_VER))
 	(cp -R $(INSTALL_PREFIX)/share/openrtm-$(SHORT_VER)/components $(TARGET_example)/share/openrtm-$(SHORT_VER))
 
-	dh_install -s
+	dh_install -a
 # Must not depend on anything. This is to be called by
 # binary-arch/binary-indep
 # in another 'make' thread.
@@ -184,7 +190,7 @@ binary-indep: build-indep install-indep
 
 # Build architecture dependant packages using the common target.
 binary-arch: build-arch install-arch
-	$(MAKE) -f debian/rules DH_OPTIONS=-s binary-common
+	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
 
 binary: binary-arch binary-indep
 .PHONY: build clean binary-indep binary-arch binary install install-indep install-arch 
