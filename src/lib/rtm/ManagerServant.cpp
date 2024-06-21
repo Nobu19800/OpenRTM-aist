@@ -38,6 +38,9 @@ namespace RTM
   ManagerServant::ManagerServant()
     : m_masters(0), m_slaves(0)
   {
+#ifdef ORB_IS_OMNIORB
+    ::RTC::Manager::instance().theShortCutPOA()->activate_object(this);
+#endif
     rtclog.setName("ManagerServant");
     coil::Properties config(m_mgr.getConfig());    
 

@@ -1488,8 +1488,13 @@ namespace RTC
    */
   void Manager::shutdownManagerServant()
   {
+#ifdef ORB_IS_OMNIORB
+    PortableServer::ObjectId_var oid = theShortCutPOA()->servant_to_id(m_mgrservant);
+    theShortCutPOA()->deactivate_object(oid);
+#else
     PortableServer::ObjectId_var oid = m_pPOA->servant_to_id(m_mgrservant);
     m_pPOA->deactivate_object(oid);
+#endif
     delete m_mgrservant;
     m_mgrservant = nullptr;
   }
@@ -1528,6 +1533,29 @@ namespace RTC
       // arguments until shutdown and the first argument type is int&
       m_argvSize = static_cast<int>(m_argv.size());
       m_pORB = CORBA::ORB_init(m_argvSize, m_argv.get());
+#ifdef ORB_IS_OMNIORB
+      const char *conf = "corba.alternate_iiop_addresses";
+      if (m_config.findNode(conf) != nullptr)
+      {
+        for (auto const &addr : coil::split(m_config[conf], ",", true))
+        {
+          coil::vstring addr_port = coil::split(addr, ":");
+          if (addr_port.size() == 2)
+          {
+            IIOP::Address iiop_addr;
+            iiop_addr.host = addr_port[0].c_str();
+            CORBA::UShort port;
+            coil::stringTo(port, addr_port[1].c_str());
+            iiop_addr.port = port;
+#if defined(RTM_OMNIORB_40) || defined(RTM_OMNIORB_41)
+            omniIOR::add_IIOP_ADDRESS(iiop_addr);
+#else
+            omniIOR::add_IIOP_ADDRESS(iiop_addr, nullptr);
+#endif // defined(RTC_OMNIORB_40) and defined(RTC_OMNIORB_41)
+          }
+        }
+      }
+#endif // ORB_IS_OMNIORB
       // Get the RootPOA
       CORBA::Object_var obj =
           m_pORB->resolve_initial_references((char *)"RootPOA");
@@ -1567,7 +1595,7 @@ namespace RTC
       m_pPOAManager = m_pPOA->the_POAManager();
 #ifdef ORB_IS_OMNIORB
       CORBA::PolicyList pl;
-      pl.length(1);
+      pl.length(2);
 #if defined(RTM_OMNIORB_42) || defined(RTM_OMNIORB_43)
       pl[0] = omniPolicy::create_local_shortcut_policy(omniPolicy::LOCAL_CALLS_SHORTCUT);
 #else
@@ -1575,32 +1603,13 @@ namespace RTC
       v <<= omniPolicy::LOCAL_CALLS_SHORTCUT;
       pl[0] = m_pORB->create_policy(omniPolicy::LOCAL_SHORTCUT_POLICY_TYPE, v);
 #endif
+      CORBA::Any a;
+      a <<= BiDirPolicy::BOTH;
+      pl[1] = m_pORB->create_policy(BiDirPolicy::BIDIRECTIONAL_POLICY_TYPE, a);
       m_pShortCutPOA = m_pPOA->create_POA("shortcut", m_pPOAManager, pl);
 #endif
 
-#ifdef ORB_IS_OMNIORB
-      const char *conf = "corba.alternate_iiop_addresses";
-      if (m_config.findNode(conf) != nullptr)
-      {
-        for (auto const &addr : coil::split(m_config[conf], ",", true))
-        {
-          coil::vstring addr_port = coil::split(addr, ":");
-          if (addr_port.size() == 2)
-          {
-            IIOP::Address iiop_addr;
-            iiop_addr.host = addr_port[0].c_str();
-            CORBA::UShort port;
-            coil::stringTo(port, addr_port[1].c_str());
-            iiop_addr.port = port;
-#if defined(RTM_OMNIORB_40) || defined(RTM_OMNIORB_41)
-            omniIOR::add_IIOP_ADDRESS(iiop_addr);
-#else
-            omniIOR::add_IIOP_ADDRESS(iiop_addr, nullptr);
-#endif // defined(RTC_OMNIORB_40) and defined(RTC_OMNIORB_41)
-          }
-        }
-      }
-#endif // ORB_IS_OMNIORB
+
     }
     catch (...)
     {

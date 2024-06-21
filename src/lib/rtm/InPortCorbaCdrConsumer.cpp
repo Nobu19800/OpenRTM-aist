@@ -143,11 +143,11 @@ namespace RTC
     RTC_TRACE(("subscribeInterface()"));
     RTC_DEBUG_STR((NVUtil::toString(properties)));
 
-    // getting InPort's ref from IOR string
-    if (subscribeFromIor(properties)) { return true; }
-
     // getting InPort's ref from Object reference
     if (subscribeFromRef(properties)) { return true; }
+
+        // getting InPort's ref from IOR string
+    if (subscribeFromIor(properties)) { return true; }
 
     return false;
   }
@@ -165,8 +165,8 @@ namespace RTC
     RTC_TRACE(("unsubscribeInterface()"));
     RTC_DEBUG_STR((NVUtil::toString(properties)));
 
-    if (unsubscribeFromIor(properties)) { return; }
-    unsubscribeFromRef(properties);
+    if (unsubscribeFromRef(properties)) { return; }
+    unsubscribeFromIor(properties);
   }
 
   //----------------------------------------------------------------------

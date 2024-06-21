@@ -74,6 +74,9 @@ namespace RTC
       m_readAllCompletion(false), m_writeAllCompletion(false),
       m_insref(RTC::LightweightRTObject::_nil()), m_sdoconterm(nullptr)
   {
+#ifdef ORB_IS_OMNIORB
+    ::RTC::Manager::instance().theShortCutPOA()->activate_object(this);
+#endif
     m_objref = this->_this();
     m_pSdoConfigImpl = new SDOPackage::Configuration_impl(m_configsets,
                                                           m_sdoservice);
@@ -99,6 +102,9 @@ namespace RTC
       m_readAll(false), m_writeAll(false),
       m_readAllCompletion(false), m_writeAllCompletion(false), m_sdoconterm(nullptr)
   {
+#ifdef ORB_IS_OMNIORB
+    ::RTC::Manager::instance().theShortCutPOA()->activate_object(this);
+#endif
     m_objref = this->_this();
     m_pSdoConfigImpl = new SDOPackage::Configuration_impl(m_configsets,
                                                           m_sdoservice);
@@ -2581,9 +2587,14 @@ namespace RTC
         PortableServer::ObjectId_var oid1;
         oid1 = m_pPOA->servant_to_id(m_pSdoConfigImpl);
         PortableServer::ObjectId_var oid2;
-        oid2 = m_pPOA->servant_to_id(this);
         m_pPOA->deactivate_object(oid1);
-        m_pPOA->deactivate_object(oid2);
+#ifdef ORB_IS_OMNIORB
+    oid2 = ::RTC::Manager::instance().theShortCutPOA()->servant_to_id(this);
+    ::RTC::Manager::instance().theShortCutPOA()->deactivate_object(oid2);
+#else
+    oid2 = m_pPOA->servant_to_id(this);
+    m_pPOA->deactivate_object(oid2);
+#endif
 #ifndef ORB_IS_RTORB
         if (!CORBA::is_nil(m_insref))
           {
