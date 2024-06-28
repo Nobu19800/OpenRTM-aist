@@ -1276,19 +1276,7 @@ namespace RTC
       std::string mpm_{coil::eraseBothEndsBlank(itr)};
       if (mpm_.empty())
       {
-        std::string mpm_{coil::eraseBothEndsBlank(itr)};
-        if (mpm_.empty())
-        {
-          continue;
-        }
-        std::string basename_ = coil::split(mpm_, ".").front() + "Init";
-        try
-        {
-          m_module->load(mpm_, basename_);
-        }
-        catch (...)
-        {
-        }
+        continue;
       }
       std::string basename_ = coil::split(mpm_, ".").front() + "Init";
       try
