@@ -1173,7 +1173,7 @@ namespace RTC
     node << portprop;
 
 
-    NVUtil::copyFromProperties(connector_profile.properties, prop);
+    NVUtil::mergeFromProperties(connector_profile.properties, prop);
 
     std::string _str = node["fan_out"];
     unsigned int value = 100;

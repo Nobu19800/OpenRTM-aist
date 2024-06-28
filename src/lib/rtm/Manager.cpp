@@ -692,7 +692,40 @@ namespace RTC
 
       if (!coil::toBool(m_config["manager.modules.search_auto"], "YES", "NO", true))
       {
-        return nullptr;
+        RTC_ERROR(("Factory not found: %s",
+                   comp_id["implementation_id"].c_str()));
+
+        if (!coil::toBool(m_config["manager.modules.search_auto"], "YES", "NO", true))
+        {
+          return nullptr;
+        }
+        // automatic module loading
+        std::vector<coil::Properties> mp(m_module->getLoadableModules());
+        RTC_INFO(("%d loadable modules found", mp.size()));
+
+        std::vector<coil::Properties>::iterator it;
+        it = std::find_if(mp.begin(), mp.end(), ModulePredicate(comp_id));
+        if (it == mp.end())
+        {
+          RTC_ERROR(("No module for %s in loadable modules list",
+                     comp_id["implementation_id"].c_str()));
+          return nullptr;
+        }
+        if (it->findNode("module_file_path") == nullptr)
+        {
+          RTC_ERROR(("Hmm...module_file_path key not found."));
+          return nullptr;
+        }
+        // module loading
+        RTC_INFO(("Loading module: %s", (*it)["module_file_path"].c_str()));
+        load((*it)["module_file_path"], "");
+        factory = m_factory.find(comp_id);
+        if (factory == nullptr)
+        {
+          RTC_ERROR(("Factory not found for loaded module: %s",
+                     comp_id["implementation_id"].c_str()));
+          return nullptr;
+        }
       }
       // automatic module loading
       std::vector<coil::Properties> mp(m_module->getLoadableModules());
@@ -1243,7 +1276,19 @@ namespace RTC
       std::string mpm_{coil::eraseBothEndsBlank(std::move(itr))};
       if (mpm_.empty())
       {
-        continue;
+        std::string mpm_{coil::eraseBothEndsBlank(itr)};
+        if (mpm_.empty())
+        {
+          continue;
+        }
+        std::string basename_ = coil::split(mpm_, ".").front() + "Init";
+        try
+        {
+          m_module->load(mpm_, basename_);
+        }
+        catch (...)
+        {
+        }
       }
       std::string basename_ = coil::split(mpm_, ".").front() + "Init";
       try
@@ -1608,8 +1653,6 @@ namespace RTC
       pl[1] = m_pORB->create_policy(BiDirPolicy::BIDIRECTIONAL_POLICY_TYPE, a);
       m_pShortCutPOA = m_pPOA->create_POA("shortcut", m_pPOAManager, pl);
 #endif
-
-
     }
     catch (...)
     {
