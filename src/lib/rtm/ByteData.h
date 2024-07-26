@@ -1,7 +1,9 @@
 ﻿#ifndef RTC_BYTEDATA_H
 #define RTC_BYTEDATA_H
 
-
+#pragma warning(push)
+#pragma warning(disable: 4521)
+#pragma warning(disable: 4522)
 
 namespace RTC
 {
@@ -322,5 +324,6 @@ namespace RTC
 
 } // namespace RTC
 
+#pragma warning(pop)
 
 #endif  // RTC_BYTEDATA_H
