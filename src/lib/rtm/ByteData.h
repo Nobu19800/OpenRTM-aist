@@ -326,6 +326,8 @@ namespace RTC
 
 } // namespace RTC
 
+#ifdef WIN32
 #pragma warning(pop)
+#endif
 
 #endif  // RTC_BYTEDATA_H
