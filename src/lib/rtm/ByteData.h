@@ -1,9 +1,11 @@
 ﻿#ifndef RTC_BYTEDATA_H
 #define RTC_BYTEDATA_H
 
+#ifdef WIN32
 #pragma warning(push)
 #pragma warning(disable: 4521)
 #pragma warning(disable: 4522)
+#endif
 
 namespace RTC
 {
