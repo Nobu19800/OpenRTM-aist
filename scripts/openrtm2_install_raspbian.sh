@@ -6,7 +6,7 @@
 #         Nobu Kawauchi
 #
 
-VERSION=2.0.2.00
+VERSION=2.0.2.03
 FILENAME=openrtm2_install_raspbian.sh
 BIT=`getconf LONG_BIT`
 
@@ -73,7 +73,6 @@ cmake_tools="cmake doxygen graphviz nkf"
 build_tools="subversion git"
 deb_pkg="uuid-dev libboost-filesystem-dev"
 pkg_tools="build-essential debhelper devscripts"
-#fluentbit="td-agent-bit"
 omni_devel="libomniorb4-dev omniidl"
 omni_runtime="omniorb-nameserver"
 openrtm2_devel="openrtm2-doc openrtm2-idl openrtm2-dev"
@@ -111,6 +110,7 @@ arg_python=false
 arg_java=false
 arg_rtshell=false
 err_message=""
+rts_msg=""
 select_opt_c=""
 }
 
@@ -300,11 +300,13 @@ check_codename () {
   for c in $cnames; do
     if test -f "/etc/apt/sources.list"; then
       res=`grep $c /etc/apt/sources.list`
+      res2=`grep -r $c /etc/apt/sources.list.d`
     else
       echo $msg1
       exit
     fi
-    if test ! "x$res" = "x" ; then
+    if test ! "x$res" = "x" ||
+       test ! "x$res2" = "x" ; then
       code_name=$c
     fi
   done
@@ -346,7 +348,6 @@ check_reposerver()
 #---------------------------------------
 create_srclist () {
   openrtm_repo="deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/openrtm.key] http://$reposerver/pub/Linux/raspbian/ $code_name main"
-  #fluent_repo="deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/fluentbit-keyring.gpg] https://packages.fluentbit.io/raspbian/$code_name $code_name main"
 }
 
 #---------------------------------------
@@ -580,17 +581,14 @@ install_proc()
   if test "x$arg_rtshell" = "xtrue" ; then
     select_opt_shl="[rtshell] install"
     install_packages python3-pip
-    if test "x$code_name" = "xbullseye"; then
-      rtshell_ret=`sudo python3 -m pip install rtshell-aist`
-    else
-      rtshell_ret=`sudo python3 -m pip install --break-system-packages rtshell-aist`
-    fi
+    rtshell_ret=`sudo python3 -m pip install rtshell-aist`
     if test "x$rtshell_ret" != "x"; then
       sudo rtshell_post_install -n
     else
-      msg="\n[ERROR] Failed to install rtshell-aist."
-      tmp="$err_message$msg"
-      err_message=$tmp
+      rts_msg="[ERROR] Failed to install rtshell-aist."
+      rts_msg2="Please add the following two lines to /etc/pip.conf and run the script again."
+      rts_msg3="[global]"
+      rts_msg4="break-system-packages = true"
     fi
   fi
 }
@@ -804,17 +802,21 @@ if test "x$OPT_FLG" = "xtrue" &&
   sudo update-alternatives --set java ${JAVA8}
 fi
 
-#if test "x$OPT_CORE" = "xtrue" ; then
-#  sudo systemctl enable td-agent-bit
-#  sudo systemctl start td-agent-bit
-#fi
-
 install_result $install_pkgs
 uninstall_result $uninstall_pkgs
 if test ! "x$err_message" = "x" ; then
   ESC=$(printf '\033')
   echo $LF
   echo "${ESC}[33m${err_message}${ESC}[m"
+fi
+
+if test ! "x$rts_msg" = "x" ; then
+  ESC=$(printf '\033')
+  echo $LF
+  echo "${ESC}[33m${rts_msg}${ESC}[m"
+  echo "${ESC}[33m${rts_msg2}${ESC}[m"
+  echo "${ESC}[33m${rts_msg3}${ESC}[m"
+  echo "${ESC}[33m${rts_msg4}${ESC}[m"
 fi
 
 #ESC=$(printf '\033')

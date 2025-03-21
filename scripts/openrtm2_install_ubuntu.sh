@@ -14,7 +14,7 @@
 # = OPT_UNINST   : uninstallation
 #
 
-VERSION=2.0.2.00
+VERSION=2.0.2.04
 FILENAME=openrtm2_install_ubuntu.sh
 
 #
@@ -92,7 +92,8 @@ cmake_tools="cmake doxygen graphviz nkf"
 build_tools="subversion git"
 deb_pkg="uuid-dev libboost-filesystem-dev"
 pkg_tools="build-essential debhelper devscripts"
-fluentbit="td-agent-bit"
+fluentbit19="td-agent-bit"
+fluentbit="fluent-bit"
 omni_devel="libomniorb4-dev omniidl"
 omni_runtime="omniorb-nameserver"
 openrtm2_devel="openrtm2-doc openrtm2-idl openrtm2-dev"
@@ -137,6 +138,7 @@ arg_java=false
 arg_openrtp=false
 arg_rtshell=false
 err_message=""
+rts_msg=""
 select_opt_c=""
 }
 
@@ -402,11 +404,13 @@ create_srclist () {
   for c in $cnames; do
     if test -f "/etc/apt/sources.list"; then
       res=`grep $c /etc/apt/sources.list`
+      res2=`grep -r $c /etc/apt/sources.list.d`
     else
       echo $msg1
       exit
     fi
-    if test ! "x$res" = "x" ; then
+    if test ! "x$res" = "x" ||
+       test ! "x$res2" = "x" ; then
       code_name=$c
     fi
   done
@@ -565,7 +569,11 @@ u_src_pkgs="$omni_runtime $omni_devel"
 dev_pkgs="$runtime_pkgs $src_pkgs $openrtm2_devel"
 u_dev_pkgs="$u_runtime_pkgs $openrtm2_devel"
 
-core_pkgs="$src_pkgs $autotools $build_tools $pkg_tools $fluentbit"
+if test "x$code_name" = "xfocal" || test "x$code_name" = "xjammy" ; then
+  core_pkgs="$src_pkgs $autotools $build_tools $pkg_tools $fluentbit19"
+else
+  core_pkgs="$src_pkgs $autotools $build_tools $pkg_tools"
+fi
 u_core_pkgs="$u_src_pkgs"
 
 ros_pkg="$openrtm2_ros"
@@ -672,9 +680,10 @@ install_proc()
     if test "x$rtshell_ret" != "x"; then
       sudo rtshell_post_install -n
     else
-      msg="\n[ERROR] Failed to install rtshell-aist."
-      tmp="$err_message$msg"
-      err_message=$tmp
+      rts_msg="[ERROR] Failed to install rtshell-aist."
+      rts_msg2="Please add the following text to /etc/pip.conf and run the script again."
+      rts_msg3="[global]"
+      rts_msg4="break-system-packages = true"
     fi
   fi
 }
@@ -910,8 +919,10 @@ if test "x$OPT_UNINST" = "xtrue" ; then
 fi
 
 if test "x$OPT_COREDEVEL" = "xtrue" ; then
-  sudo systemctl enable td-agent-bit
-  sudo systemctl start td-agent-bit
+  if test "x$code_name" = "xfocal" || test "x$code_name" = "xjammy" ; then
+    sudo systemctl enable td-agent-bit
+    sudo systemctl start td-agent-bit
+  fi
 fi
 
 install_result $install_pkgs
@@ -922,10 +933,21 @@ if test ! "x$err_message" = "x" ; then
   echo "${ESC}[33m${err_message}${ESC}[m"
 fi
 
+if test ! "x$rts_msg" = "x" ; then
+  ESC=$(printf '\033')
+  echo $LF
+  echo "${ESC}[33m${rts_msg}${ESC}[m"
+  echo "${ESC}[33m${rts_msg2}${ESC}[m"
+  echo "${ESC}[33m${rts_msg3}${ESC}[m"
+  echo "${ESC}[33m${rts_msg4}${ESC}[m"
+fi
+
 ESC=$(printf '\033')
 if test "x$OPT_UNINST" = "xtrue" &&
    test "x$arg_cxx" = "xtrue" &&
-   test "x$OPT_COREDEVEL" = "xfalse" ; then
+   test "x$OPT_COREDEVEL" = "xfalse" &&
+   test "x$code_name" != "xnoble" ; then
+  echo "code_name = "$code_name
   msg1='To use the log collection extension using the Fluentd logger,'
   msg2='please install Fluent Bit by following the steps on the following web page.'
   msg3='https://docs.fluentbit.io/manual/installation/linux/ubuntu'

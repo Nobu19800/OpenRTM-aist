@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.5.1)
 
 project (OpenRTM_aist
-	VERSION 2.0.2
+	VERSION 2.1.0
 	LANGUAGES CXX)
 
 set(CORBA omniORB CACHE STRING "set CORBA ")
@@ -120,7 +120,11 @@ elseif(UNIX)
 	set(INSTALL_RTM_ETC_DIR ${CMAKE_INSTALL_SYSCONFDIR})
 	set(INSTALL_RTM_SHARE_DIR ${CMAKE_INSTALL_DATAROOTDIR})
 	if(${CMAKE_CXX_COMPILER_VERSION} VERSION_GREATER_EQUAL 12.0.0)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-aggressive-loop-optimizations --param max-inline-insns-single=1000 --param inline-unit-growth=1000 --param large-function-growth=2000")
+		if(NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang")
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-aggressive-loop-optimizations --param max-inline-insns-single=1000 --param inline-unit-growth=1000 --param large-function-growth=2000")
+		else()
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --param max-inline-insns-single=1000 --param inline-unit-growth=1000 --param large-function-growth=2000")
+		endif()
 	endif()
 else()
 	set(INSTALL_RTM_SCRIPT_DIR lib/openrtm-${RTM_MAJOR_VERSION}.${RTM_MINOR_VERSION}/py_helper)
@@ -977,16 +981,28 @@ if(UNIX)
       )
     endif()
     file(STRINGS "/etc/os-release" data_list REGEX "^(VERSION_CODENAME)=")
-
     # Look for lines like VERSION_CODENAME="..."
     foreach(var ${data_list})
       if("${var}" MATCHES "^(VERSION_CODENAME)=(.*)$")
         set(ubuntu_codename "${CMAKE_MATCH_2}")
-        configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/control.${ubuntu_codename}
-             ${PROJECT_BINARY_DIR}/control @ONLY
-        )
       endif()
     endforeach()
+
+    if(${ubuntu_codename} MATCHES "focal" OR
+       ${ubuntu_codename} MATCHES "jammy")
+      configure_file(${PROJECT_SOURCE_DIR}/src/ext/transport/FastRTPS/CORBACdrDataPubSubTypes.cpp.ubuntu2204_earlier
+	      ${PROJECT_SOURCE_DIR}/src/ext/transport/FastRTPS/CORBACdrDataPubSubTypes.cpp @ONLY
+      )
+      configure_file(${PROJECT_SOURCE_DIR}/src/ext/transport/ROS2Transport/ROS2Serializer.h.ubuntu2204_earlier
+	      ${PROJECT_SOURCE_DIR}/src/ext/transport/ROS2Transport/ROS2Serializer.h @ONLY
+      )
+    endif()
+
+    if(BUILD_RTM_LINUX_PKGS)
+      configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/control.${ubuntu_codename}
+             ${PROJECT_BINARY_DIR}/control @ONLY
+      )
+    endif()
   else()
     configure_file(${PROJECT_SOURCE_DIR}/packages/deb/debian/rules.not-ros-support.in
 	 ${PROJECT_BINARY_DIR}/rules @ONLY
