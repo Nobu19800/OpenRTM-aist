@@ -663,9 +663,8 @@ namespace RTC
     //------------------------------------------------------------
     // extract "comp_type" and "comp_prop" from comp_arg
     coil::Properties comp_prop = coil::Properties();
-    coil::Properties comp_id = coil::Properties();
-    if (!procComponentArgs(argstr.c_str(), comp_id, comp_prop))
-      return nullptr;
+    coil::Properties comp_id   = coil::Properties();
+    if (!procComponentArgs(argstr.c_str(), comp_id, comp_prop)) return nullptr;
 
     //------------------------------------------------------------
     // Because the format of port-name had been changed from <port_name>
@@ -673,187 +672,185 @@ namespace RTC
     // (since r1648)
 
     if (comp_prop.findNode("exported_ports") != nullptr)
-    {
-      coil::vstring exported_ports;
-      exported_ports = coil::split(comp_prop["exported_ports"], ",");
-
-      std::string exported_ports_str;
-      for (size_t i(0), len(exported_ports.size()); i < len; ++i)
       {
-        coil::vstring keyval(coil::split(exported_ports[i], "."));
-        if (keyval.size() > 2)
-        {
-          exported_ports_str += (keyval[0] + "." + keyval.back());
-        }
-        else
-        {
-          exported_ports_str += exported_ports[i];
-        }
+        coil::vstring exported_ports;
+        exported_ports = coil::split(comp_prop["exported_ports"], ",");
 
-        if (i != exported_ports.size() - 1)
-        {
-          exported_ports_str += ",";
-        }
+        std::string exported_ports_str;
+        for (size_t i(0), len(exported_ports.size()); i < len; ++i)
+          {
+            coil::vstring keyval(coil::split(exported_ports[i], "."));
+            if (keyval.size() > 2)
+              {
+                exported_ports_str += (keyval[0] + "." + keyval.back());
+              }
+            else
+              {
+                exported_ports_str += exported_ports[i];
+              }
+
+            if (i != exported_ports.size() - 1)
+              {
+                exported_ports_str += ",";
+              }
+          }
+
+         comp_prop["exported_ports"] = exported_ports_str;
+         comp_prop["conf.default.exported_ports"] = exported_ports_str;
+
       }
-
-      comp_prop["exported_ports"] = exported_ports_str;
-      comp_prop["conf.default.exported_ports"] = exported_ports_str;
-    }
     //------------------------------------------------------------
 
     //------------------------------------------------------------
     // Create Component
-    FactoryBase *factory(m_factory.find(comp_id));
+    FactoryBase* factory(m_factory.find(comp_id));
     if (factory == nullptr)
-    {
-      RTC_ERROR(("Factory not found: %s",
-                 comp_id["implementation_id"].c_str()));
-
-      if (!coil::toBool(m_config["manager.modules.search_auto"], "YES", "NO", true))
       {
         RTC_ERROR(("Factory not found: %s",
                    comp_id["implementation_id"].c_str()));
 
         if (!coil::toBool(m_config["manager.modules.search_auto"], "YES", "NO", true))
-        {
-          return nullptr;
-        }
+          {
+            return nullptr;
+          }
         // automatic module loading
         std::vector<coil::Properties> mp(m_module->getLoadableModules());
         RTC_INFO(("%d loadable modules found", mp.size()));
 
-        std::vector<coil::Properties>::iterator it;
-        it = std::find_if(mp.begin(), mp.end(), ModulePredicate(comp_id));
-        if (it == mp.end())
-        {
-          RTC_ERROR(("No module for %s in loadable modules list",
-                     comp_id["implementation_id"].c_str()));
-          return nullptr;
-        }
-        if (it->findNode("module_file_path") == nullptr)
-        {
-          RTC_ERROR(("Hmm...module_file_path key not found."));
-          return nullptr;
-        }
-        // module loading
-        RTC_INFO(("Loading module: %s", (*it)["module_file_path"].c_str()));
-        load((*it), "");
-        factory = m_factory.find(comp_id);
-        if (factory == nullptr)
-        {
-          RTC_ERROR(("Factory not found for loaded module: %s",
-                     comp_id["implementation_id"].c_str()));
-          return nullptr;
-        }
+      std::vector<coil::Properties>::iterator it;
+      it = std::find_if(mp.begin(), mp.end(), ModulePredicate(comp_id));
+      if (it == mp.end())
+      {
+        RTC_ERROR(("No module for %s in loadable modules list",
+                    comp_id["implementation_id"].c_str()));
+        return nullptr;
+      }
+      if (it->findNode("module_file_path") == nullptr)
+      {
+        RTC_ERROR(("Hmm...module_file_path key not found."));
+        return nullptr;
+      }
+      // module loading
+      RTC_INFO(("Loading module: %s", (*it)["module_file_path"].c_str()));
+      load((*it), "");
+      factory = m_factory.find(comp_id);
+      if (factory == nullptr)
+      {
+        RTC_ERROR(("Factory not found for loaded module: %s",
+                    comp_id["implementation_id"].c_str()));
+        return nullptr;
       }
 
-      coil::Properties prop;
-      prop = factory->profile();
+    }
 
-      static const char *const inherit_prop[] = {
-          "config.version",
-          "openrtm.name",
-          "openrtm.version",
-          "os.name",
-          "os.release",
-          "os.version",
-          "os.arch",
-          "os.hostname",
-          "corba.endpoints",
-          "corba.endpoints_ipv4",
-          "corba.endpoints_ipv6",
-          "corba.id",
-          "exec_cxt.periodic.type",
-          "exec_cxt.periodic.rate",
-          "exec_cxt.event_driven.type",
-          "exec_cxt.sync_transition",
-          "exec_cxt.sync_activation",
-          "exec_cxt.sync_deactivation",
-          "exec_cxt.sync_reset",
-          "exec_cxt.transition_timeout",
-          "exec_cxt.activation_timeout",
-          "exec_cxt.deactivation_timeout",
-          "exec_cxt.reset_timeout",
-          "exec_cxt.cpu_affinity",
-          "exec_cxt.priority",
-          "exec_cxt.stack_size",
-          "exec_cxt.interrupt",
-          "logger.enable",
-          "logger.log_level",
-          "naming.enable",
-          "naming.type",
-          "naming.formats",
-          "sdo.service.provider.available_services",
-          "sdo.service.consumer.available_services",
-          "sdo.service.provider.enabled_services",
-          "sdo.service.consumer.enabled_services",
-          "manager.instance_name",
-          ""};
+    coil::Properties prop;
+    prop = factory->profile();
 
-      coil::Properties &_prop = prop.getNode("port");
-      _prop << m_config.getNode("port");
+    static const char* const inherit_prop[] = {
+      "config.version",
+      "openrtm.name",
+      "openrtm.version",
+      "os.name",
+      "os.release",
+      "os.version",
+      "os.arch",
+      "os.hostname",
+      "corba.endpoints",
+      "corba.endpoints_ipv4",
+      "corba.endpoints_ipv6",
+      "corba.id",
+      "exec_cxt.periodic.type",
+      "exec_cxt.periodic.rate",
+      "exec_cxt.event_driven.type",
+      "exec_cxt.sync_transition",
+      "exec_cxt.sync_activation",
+      "exec_cxt.sync_deactivation",
+      "exec_cxt.sync_reset",
+      "exec_cxt.transition_timeout",
+      "exec_cxt.activation_timeout",
+      "exec_cxt.deactivation_timeout",
+      "exec_cxt.reset_timeout",
+      "exec_cxt.cpu_affinity",
+      "exec_cxt.priority",
+      "exec_cxt.stack_size",
+      "exec_cxt.interrupt",
+      "logger.enable",
+      "logger.log_level",
+      "naming.enable",
+      "naming.type",
+      "naming.formats",
+      "sdo.service.provider.available_services",
+      "sdo.service.consumer.available_services",
+      "sdo.service.provider.enabled_services",
+      "sdo.service.consumer.enabled_services",
+      "manager.instance_name",
+      ""
+    };
 
-      RTObject_impl *comp;
-      comp = factory->create(this);
-      if (comp == nullptr)
+    coil::Properties &_prop = prop.getNode("port");
+    _prop << m_config.getNode("port");
+
+    RTObject_impl* comp;
+    comp = factory->create(this);
+    if (comp == nullptr)
       {
         RTC_ERROR(("RTC creation failed: %s",
                    comp_id["implementation_id"].c_str()));
         return nullptr;
       }
 
-      if (m_config.getProperty("corba.endpoints_ipv4").empty())
+    if (m_config.getProperty("corba.endpoints_ipv4").empty())
       {
         RTC::RTObject_var rtobj = comp->getObjRef();
         setEndpointProperty(rtobj.in());
       }
 
-      for (int i(0); inherit_prop[i][0] != '\0'; ++i)
+    for (int i(0); inherit_prop[i][0] != '\0'; ++i)
       {
-        const char *key(inherit_prop[i]);
+        const char* key(inherit_prop[i]);
         if (m_config.findNode(key) != nullptr)
-        {
-          prop[key] = m_config[key];
-        }
+          {
+            prop[key] = m_config[key];
+          }
       }
 
-      RTC_TRACE(("RTC created: %s", comp_id["implementation_id"].c_str()));
-      m_listeners.rtclifecycle_.postCreate(comp);
-      prop << comp_prop;
+    RTC_TRACE(("RTC created: %s", comp_id["implementation_id"].c_str()));
+    m_listeners.rtclifecycle_.postCreate(comp);
+    prop << comp_prop;
 
-      //------------------------------------------------------------
-      // Load configuration file specified in "rtc.conf"
-      //
-      // rtc.conf:
-      //   [category].[type_name].config_file = file_name
-      //   [category].[instance_name].config_file = file_name
-      m_listeners.rtclifecycle_.preConfigure(prop);
-      configureComponent(comp, prop);
-      m_listeners.rtclifecycle_.postConfigure(prop);
+    //------------------------------------------------------------
+    // Load configuration file specified in "rtc.conf"
+    //
+    // rtc.conf:
+    //   [category].[type_name].config_file = file_name
+    //   [category].[instance_name].config_file = file_name
+    m_listeners.rtclifecycle_.preConfigure(prop);
+    configureComponent(comp, prop);
+    m_listeners.rtclifecycle_.postConfigure(prop);
 
-      //------------------------------------------------------------
-      // Component initialization
-      m_listeners.rtclifecycle_.preInitialize();
-      if (comp->initialize() != RTC::RTC_OK)
+    //------------------------------------------------------------
+    // Component initialization
+    m_listeners.rtclifecycle_.preInitialize();
+    if (comp->initialize() != RTC::RTC_OK)
       {
         RTC_TRACE(("RTC initialization failed: %s",
                    comp_id["implementation_id"].c_str()));
         RTC_TRACE(("%s was finalized", comp_id["implementation_id"].c_str()));
         if (comp->exit() != RTC::RTC_OK)
-        {
-          RTC_DEBUG(("%s finalization was failed.",
-                     comp_id["implementation_id"].c_str()));
-        }
+          {
+            RTC_DEBUG(("%s finalization was failed.",
+                       comp_id["implementation_id"].c_str()));
+          }
         return nullptr;
       }
-      RTC_TRACE(("RTC initialization succeeded: %s",
-                 comp_id["implementation_id"].c_str()));
-      m_listeners.rtclifecycle_.postInitialize();
-      //------------------------------------------------------------
-      // Bind component to naming service
-      registerComponent(comp);
-      return comp;
-    }
+    RTC_TRACE(("RTC initialization succeeded: %s",
+               comp_id["implementation_id"].c_str()));
+    m_listeners.rtclifecycle_.postInitialize();
+    //------------------------------------------------------------
+    // Bind component to naming service
+    registerComponent(comp);
+    return comp;
+  }
 
     /*!
      * @if jp
