@@ -1243,6 +1243,9 @@ namespace RTM
             rtcd_cmd += " -f \"" + coil::escape(prop["config_file"]) + "\"";
           }
         if(create_comp)
+          {
+            rtcd_cmd += " -o \"manager.modules.load_path:" + coil::escape(prop["manager.modules.load_path"]) + "\"";
+          }
         else
           {
             //std::string component_key("manager.modules.");
